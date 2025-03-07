@@ -95,6 +95,7 @@ jobs:
         run: |
           IMAGE_TAG=$NEW_TAG
           docker build -t harshitha .
+          docker images
           docker tag harshitha:main 842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha:main
           docker push 842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha:main
           echo "ECR_REPO=$ECR_REPO" >> $GITHUB_OUTPUT
