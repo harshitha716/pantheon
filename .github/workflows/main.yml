@@ -37,7 +37,7 @@ jobs:
           echo "AWS_ACCOUNT_ID=842675998483" >> $GITHUB_OUTPUT
           echo "EKS_CLUSTER=CI-CD" >> $GITHUB_OUTPUT
           echo "ECR_REPO=harshitha" >> $GITHUB_OUTPUT
-          echo "ECR_REGISTRY:$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+          echo "ECR_REGISTRY=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
           echo "SLACK_WEBHOOK_URL=PRD_SLACK_WEBHOOK_URL" >> $GITHUB_OUTPUT
           echo "PRD_TRIGGER_TOKEN=PRD_TRIGGER_TOKEN" >> $GITHUB_OUTPUT
           echo "ENVIRONMENT=Production" >> $GITHUB_OUTPUT
