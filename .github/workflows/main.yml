@@ -23,6 +23,7 @@ jobs:
       AWS_ACCOUNT_ID: ${{ steps.vars.outputs.AWS_ACCOUNT_ID }}
       EKS_CLUSTER: ${{ steps.vars.outputs.EKS_CLUSTER }}
       ECR_REPO: ${{ steps.vars.outputs.ECR_REPO }}
+      ECR_REGISTRY: ${{ steps.vars.outputs.ECR_REGISTRY }}
       APP_NAME: ${{ steps.vars.outputs.APP_NAME }}
       SLACK_WEBHOOK_URL: ${{ steps.vars.outputs.SLACK_WEBHOOK_URL }}
       ENVIRONMENT: ${{ steps.vars.outputs.ENVIRONMENT }}
@@ -36,6 +37,7 @@ jobs:
           echo "AWS_ACCOUNT_ID=842675998483" >> $GITHUB_OUTPUT
           echo "EKS_CLUSTER=CI-CD" >> $GITHUB_OUTPUT
           echo "ECR_REPO=harshitha" >> $GITHUB_OUTPUT
+          echo "ECR_REGISTRY:$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
           echo "SLACK_WEBHOOK_URL=PRD_SLACK_WEBHOOK_URL" >> $GITHUB_OUTPUT
           echo "PRD_TRIGGER_TOKEN=PRD_TRIGGER_TOKEN" >> $GITHUB_OUTPUT
           echo "ENVIRONMENT=Production" >> $GITHUB_OUTPUT
@@ -57,6 +59,7 @@ jobs:
       AWS_REGION: ${{needs.prepare-env.outputs.AWS_REGION}}
       AWS_ACCOUNT_ID: ${{needs.prepare-env.outputs.AWS_ACCOUNT_ID}}
       ECR_REPO: ${{needs.prepare-env.outputs.ECR_REPO}}
+      ECR_REGISTRY: ${{needs.prepare-env.outputs.ECR_REGISTRY}}
       APP_NAME: ${{needs.prepare-env.outputs.APP_NAME}}
       SSH_PRIVATE_KEY: ${{needs.prepare-env.outputs.SSH_PRIVATE_KEY}}
     outputs:
@@ -64,12 +67,6 @@ jobs:
       ECR_REPO: ${{ steps.build.outputs.ECR_REPO }}
 
     steps:
-      - name: Debug output
-        run: |
-          echo "NEW_TAG=$NEW_TAG"
-          echo "AWS_ACCOUNT_ID=$AWS_ACCOUNT_ID"
-          echo "AWS_REGION=$AWS_REGION"
-          
       - name: "Checkout repository on : ${{ env.NEW_TAG }}"
         uses: actions/checkout@v4
         with:
@@ -90,8 +87,6 @@ jobs:
 
       - id: build
         name: Build and Push Image
-        env:
-          ECR_REGISTRY: "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
         run: |
           IMAGE_TAG=$NEW_TAG
           docker build -t $ECR_REPO:$IMAGE_TAG .
