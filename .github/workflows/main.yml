@@ -65,6 +65,7 @@ jobs:
     outputs:
       IMAGE_TAG: ${{ steps.build.outputs.IMAGE_TAG }}
       ECR_REPO: ${{ steps.build.outputs.ECR_REPO }}
+      ECR_REGISTRY: ${{ steps.build.outputs.ECR_REGISTRY }}
 
     steps:
       - name: "Checkout repository on : ${{ env.NEW_TAG }}"
