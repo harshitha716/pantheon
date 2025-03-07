@@ -94,7 +94,7 @@ jobs:
           ECR_REGISTRY: "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
         run: |
           IMAGE_TAG=$NEW_TAG
-          docker build -t harshitha .
+          docker build -t harshitha:main .
           docker images
           docker tag harshitha:main 842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha:main
           docker push 842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha:main
