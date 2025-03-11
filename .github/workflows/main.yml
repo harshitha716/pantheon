@@ -30,6 +30,10 @@ jobs:
       STG_TRIGGER_TOKEN: ${{ github.event.client_payload.trigger_token }}
       PRD_TRIGGER_TOKEN: ${{ steps.vars.outputs.TRIGGER_TOKEN }}
       SSH_PRIVATE_KEY: ${{ steps.vars.outputs.SSH_PRIVATE_KEY }}
+      K8S_NAMESPACE: ${{ steps.vars.outputs.K8S_NAMESPACE }}
+      HELM_CHART_NAME: ${{ steps.vars.outputs.HELM_CHART_NAME }}
+      HELM_REPOSITORY: ${{ steps.vars.outputs.HELM_REPOSITORY }}
+      BUILD_ENV: ${{ steps.vars.outputs.BUILD_ENV }}
     steps:
       - id: vars
         run: |
@@ -43,6 +47,10 @@ jobs:
           echo "ENVIRONMENT=Production" >> $GITHUB_OUTPUT
           echo "APP_NAME=$APP_NAME" >> $GITHUB_OUTPUT
           echo "SSH_PRIVATE_KEY=SSH_PRIVATE_KEY" >> $GITHUB_OUTPUT
+          echo "K8S_NAMESPACE=pantheon" >> $GITHUB_OUTPUT
+          echo "HELM_CHART_NAME=zamp-svc" >> $GITHUB_OUTPUT
+          echo "HELM_REPOSITORY=zamp-dev-sg-helm-repository/zamp-svc" >> $GITHUB_OUTPUT
+          echo "BUILD_ENV=prd"  >> $GITHUB_OUTPUT
       - name: Output Branch name
         run: |
           echo ":seedling: Branch:${GITHUB_REF#refs/heads/}" >> $GITHUB_STEP_SUMMARY
@@ -140,16 +148,18 @@ jobs:
         with:
           version: "v3.7.2"
 
-      - name: Deploy to EKS with Helm
+      - name: Deploy
         run: |
-          helm upgrade --install ${APP_NAME} ${APP_NAME}-chart \
-            --namespace default \
-            --set image.repository="${ECR_REPO}" \
-            --set image.tag="${IMAGE_TAG}" \
-            --values helm/${ENVIRONMENT}-values.yaml \
-            --wait \
-            --timeout 10m0s \
-            --create-namespace
+
+          helm repo add ${K8S_NAMESPACE}-repo gs://${HELM_REPOSITORY} && helm repo update
+          helm upgrade --install ${APP_NAME} ${K8S_NAMESPACE}-repo/${HELM_CHART_NAME} \
+              --namespace ${K8S_NAMESPACE} \
+              --set default.image.repository="${ECR_REPO}" \
+              --set default.image.tag="${IMAGE_TAG}" \
+              --values helm/${BUILD_ENV}-values.yaml \
+              --wait \
+              --timeout 10m0s \
+              --create-namespace
 
   slack-notification:
     name: Slack Notification
