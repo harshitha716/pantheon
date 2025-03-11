@@ -154,8 +154,6 @@ jobs:
 
       - name: Deploy
         run: |
-        
-          helm repo index zamp-dev-sg-helm-repository/zamp-svc --url s3://zamp-dev-sg-helm-repository/
           helm s3 init --ignore-if-exists s3://zamp-dev-sg-helm-repository
           helm repo add harshi s3://zamp-dev-sg-helm-repository
           helm repo update 
