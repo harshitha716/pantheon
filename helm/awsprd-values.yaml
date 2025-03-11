@@ -34,27 +34,27 @@ default:
     volumeMount:
       enabled: true
       secrets:
-      - data:
-          - fileName: ".env"
-            mountPath: "/.env"
-            secretKey: zamp-prd-sg-pantheon-secrets-env
-        refreshInterval: 1m
-        secretStoreName: gcp-secret-manager
-        secretName: env-secrets
-      - data:
-          - fileName: ".temporal-cert"
-            mountPath: "/.temporal-cert"
-            secretKey: zamp-prd-sg-temporal-cert
-        refreshInterval: 1h
-        secretStoreName: gcp-secret-manager
-        secretName: temporal-cert
-      - data:
-          - fileName: ".temporal-key"
-            mountPath: "/.temporal-key"
-            secretKey: zamp-prd-sg-temporal-cert-key
-        refreshInterval: 1h
-        secretStoreName: gcp-secret-manager
-        secretName: temporal-key
+        - data:
+            - fileName: ".env"
+              mountPath: "/.env"
+              secretKey: zamp-prd-sg-pantheon-secrets-env
+          refreshInterval: 1m
+          secretStoreName: aws-secrets-manager  # Changed to AWS Secrets Manager
+          secretName: env-secrets
+        - data:
+            - fileName: ".temporal-cert"
+              mountPath: "/.temporal-cert"
+              secretKey: zamp-prd-sg-temporal-cert
+          refreshInterval: 1h
+          secretStoreName: aws-secrets-manager  # Changed to AWS Secrets Manager
+          secretName: temporal-cert
+        - data:
+            - fileName: ".temporal-key"
+              mountPath: "/.temporal-key"
+              secretKey: zamp-prd-sg-temporal-cert-key
+          refreshInterval: 1h
+          secretStoreName: aws-secrets-manager  # Changed to AWS Secrets Manager
+          secretName: temporal-key
 
 deployment:
   - name: "svc"
@@ -184,5 +184,3 @@ deployment:
       maxReplicas: 3
       targetCPUUtilizationPercentage: 80
       targetMemoryUtilizationPercentage: 80
-
-  
