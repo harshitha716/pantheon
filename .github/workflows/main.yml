@@ -161,9 +161,9 @@ jobs:
               --namespace harshi \
               --set default.image.repository="${ECR_REPO}" \
               --set default.image.tag="${IMAGE_TAG}" \
-              --values helm/prd-values.yaml \
+              --values helm/awsprd-values.yaml \
               --wait \
-              --timeout 10m0s \
+              --timeout 5m0s \
               --create-namespace
 
   slack-notification:
