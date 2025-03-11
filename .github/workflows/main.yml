@@ -151,11 +151,14 @@ jobs:
       - name: "Install Helm S3 Plugin"
         run: |
           helm plugin install https://github.com/hypnoglow/helm-s3.git
+          helm plugin list
+          helm repo list
 
       - name: Deploy
         run: |
 
           helm repo add ${K8S_NAMESPACE}-repo s3://zamp-dev-sg-helm-repository
+          helm repo list
           helm repo update
           helm upgrade --install ${APP_NAME} ${K8S_NAMESPACE}-repo/${HELM_CHART_NAME} \
               --namespace ${K8S_NAMESPACE} \
