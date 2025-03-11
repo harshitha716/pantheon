@@ -165,7 +165,7 @@ jobs:
           helm search repo harshi
           helm show chart harshi/zamp-svc
           aws s3 cp s3://zamp-dev-sg-helm-repository/zamp-svc/zamp-svc-0.0.1.tgz .
-          helm upgrade --install ${APP_NAME} harshi/zamp-svc \
+          helm upgrade --install ${APP_NAME} harshi/zamp-svc --version 0.0.1 \
               --namespace harshi \
               --set default.image.repository="${ECR_REPO}" \
               --set default.image.tag="${IMAGE_TAG}" \
