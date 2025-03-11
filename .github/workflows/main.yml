@@ -190,23 +190,4 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets[env.SLACK_WEBHOOK_URL] }}
           SLACK_MSG_AUTHOR: ${{ env.GITHUB_ACTOR_SLACK }}
           GITHUB_CUSTOM_REF: "refs/heads/${{env.NEW_TAG}}"
-  rollback:
-    name: Rollback Deployment
-    runs-on: ubuntu-latest
-    needs: deploy-to-eks
-    if: ${{ failure() }}  # Only run if deploy-to-eks fails
-    env:
-      APP_NAME: ${{needs.prepare-env.outputs.APP_NAME}}
-      AWS_REGION: ${{needs.prepare-env.outputs.AWS_REGION}}
-      EKS_CLUSTER: ${{needs.prepare-env.outputs.EKS_CLUSTER}}
-      ECR_REPO: ${{needs.build-push-image.outputs.ECR_REPO}}
-      IMAGE_TAG: ${{needs.build-push-image.outputs.IMAGE_TAG}}
-      ENVIRONMENT: ${{needs.prepare-env.outputs.ENVIRONMENT}}
-
-    steps:
-      - name: "Rollback EKS Deployment"
-        run: |
-          echo "Rolling back to previous stable version"
-          helm rollback ${APP_NAME} --namespace default
-          echo ":arrow_backward: Rollback to previous stable version" >> $GITHUB_STEP_SUMMARY
-
+  
