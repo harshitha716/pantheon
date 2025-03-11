@@ -155,7 +155,7 @@ jobs:
       - name: Deploy
         run: |
 
-          helm repo add ${K8S_NAMESPACE} s3://${HELM_REPOSITORY}
+          helm repo add ${K8S_NAMESPACE} s3://zamp-dev-sg-helm-repository
           helm repo update
           helm upgrade --install ${APP_NAME} ${K8S_NAMESPACE} /${HELM_CHART_NAME} \
               --namespace ${K8S_NAMESPACE} \
