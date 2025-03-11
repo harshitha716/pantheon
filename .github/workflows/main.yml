@@ -34,7 +34,7 @@ jobs:
       HELM_REPOSITORY: ${{ steps.vars.outputs.HELM_REPOSITORY }}
       BUILD_ENV: ${{ steps.vars.outputs.BUILD_ENV }}
       K8S_NAMESPACE: ${{ steps.vars.outputs.K8S_NAMESPACE }}
-      GitHubActionsRole: ${{ steps.vars.outputs.GitHubActionsRole }}
+      
     steps:
       - id: vars
         run: |
@@ -52,7 +52,7 @@ jobs:
           echo "HELM_REPOSITORY=zamp-dev-sg-helm-repository" >> $GITHUB_OUTPUT
           echo "BUILD_ENV=awsprd"  >> $GITHUB_OUTPUT
           echo "K8S_NAMESPACE=pantheon" >> $GITHUB_OUTPUT
-          echo "GitHubActionsRole=GitHubActionsRole"
+          
       - name: Output Branch name
         run: |
           echo ":seedling: Branch:${GITHUB_REF#refs/heads/}" >> $GITHUB_STEP_SUMMARY
@@ -72,7 +72,7 @@ jobs:
       ECR_REGISTRY: ${{needs.prepare-env.outputs.ECR_REGISTRY}}
       APP_NAME: ${{needs.prepare-env.outputs.APP_NAME}}
       SSH_PRIVATE_KEY: ${{needs.prepare-env.outputs.SSH_PRIVATE_KEY}}
-      GitHubActionsRole: ${{needs.prepare-env.outputs.GitHubActionsRole }}
+      
     outputs:
       IMAGE_TAG: ${{ steps.build.outputs.IMAGE_TAG }}
       ECR_REPO: ${{ steps.build.outputs.ECR_REPO }}
@@ -89,7 +89,7 @@ jobs:
       - name: 'Set up AWS credentials using OIDC'
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: arn:aws:iam::${{ needs.prepare-env.outputs.AWS_ACCOUNT_ID }}:role/$GitHubActionsRole # Role with trust policy for OIDC
+          role-to-assume: arn:aws:iam::${{ needs.prepare-env.outputs.AWS_ACCOUNT_ID }}:role/GitHubActionsRole # Role with trust policy for OIDC
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: GitHubActionsSession
 
@@ -140,7 +140,7 @@ jobs:
       - name: 'Set up AWS credentials using OIDC'
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: arn:aws:iam::${{ needs.prepare-env.outputs.AWS_ACCOUNT_ID }}:role/$GitHubActionsRole # Role with trust policy for OIDC
+          role-to-assume: arn:aws:iam::${{ needs.prepare-env.outputs.AWS_ACCOUNT_ID }}:role/GitHubActionsRole # Role with trust policy for OIDC
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: GitHubActionsSession
 
