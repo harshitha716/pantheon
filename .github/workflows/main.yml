@@ -159,8 +159,8 @@ jobs:
           helm repo add harshi s3://zamp-dev-sg-helm-repository
           helm repo list
           helm repo update
-          helm upgrade --install ${APP_NAME} ${K8S_NAMESPACE}-repo/${HELM_CHART_NAME} \
-              --namespace ${K8S_NAMESPACE} \
+          helm upgrade --install ${APP_NAME} harshi/${HELM_CHART_NAME} \
+              --namespace harshi \
               --set default.image.repository="${ECR_REPO}" \
               --set default.image.tag="${IMAGE_TAG}" \
               --values helm/${BUILD_ENV}-values.yaml \
