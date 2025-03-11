@@ -161,7 +161,7 @@ jobs:
               --namespace harshi \
               --set default.image.repository="${ECR_REPO}" \
               --set default.image.tag="${IMAGE_TAG}" \
-              --values helm/${BUILD_ENV}-values.yaml \
+              --values helm/prd-values.yaml \
               --wait \
               --timeout 10m0s \
               --create-namespace
