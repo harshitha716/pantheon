@@ -39,21 +39,21 @@ default:
             mountPath: "/.env"
             secretKey: zamp-prd-sg-pantheon-secrets-env
         refreshInterval: 1m
-        secretStoreName: aws-secrets-manager
+        secretStoreName: secretstore-external
         secretName: env-secrets
       - data:
           - fileName: ".temporal-cert"
             mountPath: "/.temporal-cert"
             secretKey: zamp-prd-sg-temporal-cert
         refreshInterval: 1h
-        secretStoreName: aws-secrets-manager
+        secretStoreName: secretstore-external
         secretName: temporal-cert
       - data:
           - fileName: ".temporal-key"
             mountPath: "/.temporal-key"
             secretKey: zamp-prd-sg-temporal-cert-key
         refreshInterval: 1h
-        secretStoreName: aws-secrets-manager
+        secretStoreName: secretstore-external
         secretName: temporal-key
 
 deployment:
