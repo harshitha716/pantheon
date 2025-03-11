@@ -30,7 +30,6 @@ jobs:
       STG_TRIGGER_TOKEN: ${{ github.event.client_payload.trigger_token }}
       PRD_TRIGGER_TOKEN: ${{ steps.vars.outputs.TRIGGER_TOKEN }}
       SSH_PRIVATE_KEY: ${{ steps.vars.outputs.SSH_PRIVATE_KEY }}
-      K8S_NAMESPACE: ${{ steps.vars.outputs.K8S_NAMESPACE }}
       HELM_CHART_NAME: ${{ steps.vars.outputs.HELM_CHART_NAME }}
       HELM_REPOSITORY: ${{ steps.vars.outputs.HELM_REPOSITORY }}
       BUILD_ENV: ${{ steps.vars.outputs.BUILD_ENV }}
@@ -47,7 +46,6 @@ jobs:
           echo "ENVIRONMENT=Production" >> $GITHUB_OUTPUT
           echo "APP_NAME=$APP_NAME" >> $GITHUB_OUTPUT
           echo "SSH_PRIVATE_KEY=SSH_PRIVATE_KEY" >> $GITHUB_OUTPUT
-          echo "K8S_NAMESPACE=pantheon" >> $GITHUB_OUTPUT
           echo "HELM_CHART_NAME=zamp-svc" >> $GITHUB_OUTPUT
           echo "HELM_REPOSITORY=zamp-dev-sg-helm-repository/zamp-svc" >> $GITHUB_OUTPUT
           echo "BUILD_ENV=prd"  >> $GITHUB_OUTPUT
@@ -157,7 +155,7 @@ jobs:
       - name: Deploy
         run: |
 
-          helm repo add ${K8S_NAMESPACE}-repo s3://zamp-dev-sg-helm-repository
+          helm repo add harshi s3://zamp-dev-sg-helm-repository
           helm repo list
           helm repo update
           helm upgrade --install ${APP_NAME} ${K8S_NAMESPACE}-repo/${HELM_CHART_NAME} \
