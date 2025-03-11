@@ -33,6 +33,8 @@ jobs:
       HELM_CHART_NAME: ${{ steps.vars.outputs.HELM_CHART_NAME }}
       HELM_REPOSITORY: ${{ steps.vars.outputs.HELM_REPOSITORY }}
       BUILD_ENV: ${{ steps.vars.outputs.BUILD_ENV }}
+      K8S_NAMESPACE: ${{ steps.vars.outputs.K8S_NAMESPACE }}
+      GitHubActionsRole: ${{ steps.vars.outputs.GitHubActionsRole }}
     steps:
       - id: vars
         run: |
@@ -47,8 +49,10 @@ jobs:
           echo "APP_NAME=$APP_NAME" >> $GITHUB_OUTPUT
           echo "SSH_PRIVATE_KEY=SSH_PRIVATE_KEY" >> $GITHUB_OUTPUT
           echo "HELM_CHART_NAME=zamp-svc" >> $GITHUB_OUTPUT
-          echo "HELM_REPOSITORY=zamp-dev-sg-helm-repository/zamp-svc" >> $GITHUB_OUTPUT
-          echo "BUILD_ENV=prd"  >> $GITHUB_OUTPUT
+          echo "HELM_REPOSITORY=zamp-dev-sg-helm-repository" >> $GITHUB_OUTPUT
+          echo "BUILD_ENV=awsprd"  >> $GITHUB_OUTPUT
+          echo "K8S_NAMESPACE=pantheon" >> $GITHUB_OUTPUT
+          echo "GitHubActionsRole=GitHubActionsRole"
       - name: Output Branch name
         run: |
           echo ":seedling: Branch:${GITHUB_REF#refs/heads/}" >> $GITHUB_STEP_SUMMARY
@@ -68,6 +72,7 @@ jobs:
       ECR_REGISTRY: ${{needs.prepare-env.outputs.ECR_REGISTRY}}
       APP_NAME: ${{needs.prepare-env.outputs.APP_NAME}}
       SSH_PRIVATE_KEY: ${{needs.prepare-env.outputs.SSH_PRIVATE_KEY}}
+      GitHubActionsRole: ${{needs.prepare-env.outputs.GitHubActionsRole }}
     outputs:
       IMAGE_TAG: ${{ steps.build.outputs.IMAGE_TAG }}
       ECR_REPO: ${{ steps.build.outputs.ECR_REPO }}
@@ -84,7 +89,7 @@ jobs:
       - name: 'Set up AWS credentials using OIDC'
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: arn:aws:iam::${{ needs.prepare-env.outputs.AWS_ACCOUNT_ID }}:role/GitHubActionsRole # Role with trust policy for OIDC
+          role-to-assume: arn:aws:iam::${{ needs.prepare-env.outputs.AWS_ACCOUNT_ID }}:role/$GitHubActionsRole # Role with trust policy for OIDC
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: GitHubActionsSession
 
@@ -97,7 +102,6 @@ jobs:
         run: |
           IMAGE_TAG=$NEW_TAG
           docker build -t $ECR_REPO:$IMAGE_TAG .
-          docker images
           docker tag $ECR_REPO:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
           echo "ECR_REPO=$ECR_REPO" >> $GITHUB_OUTPUT
@@ -121,7 +125,10 @@ jobs:
       ECR_REPO: ${{needs.build-push-image.outputs.ECR_REPO}}
       IMAGE_TAG: ${{needs.build-push-image.outputs.IMAGE_TAG}}
       ENVIRONMENT: ${{needs.prepare-env.outputs.ENVIRONMENT}}
-
+      HELM_CHART_NAME: ${{needs.prepare-env.outputs.HELM_CHART_NAME }}
+      HELM_REPOSITORY: ${{needs.prepare-env.outputs.HELM_REPOSITORY }}
+      BUILD_ENV: ${{needs.prepare-env.outputs.BUILD_ENV }}
+      K8S_NAMESPACE: ${{needs.prepare-env.outputs.K8S_NAMESPACE }}
     steps:
       - name: "Checkout repository on : ${{ env.NEW_TAG }}"
         uses: actions/checkout@v4
@@ -133,7 +140,7 @@ jobs:
       - name: 'Set up AWS credentials using OIDC'
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: arn:aws:iam::${{ needs.prepare-env.outputs.AWS_ACCOUNT_ID }}:role/GitHubActionsRole # Role with trust policy for OIDC
+          role-to-assume: arn:aws:iam::${{ needs.prepare-env.outputs.AWS_ACCOUNT_ID }}:role/$GitHubActionsRole # Role with trust policy for OIDC
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: GitHubActionsSession
 
@@ -154,16 +161,16 @@ jobs:
 
       - name: Deploy
         run: |
-          helm s3 init --ignore-if-exists s3://zamp-dev-sg-helm-repository
-          helm repo add harshi s3://zamp-dev-sg-helm-repository
+          helm s3 init --ignore-if-exists s3://${HELM_REPOSITORY}
+          helm repo add ${K8S_NAMESPACE} s3://${HELM_REPOSITORY}
           helm repo update 
-          helm upgrade --install ${APP_NAME} harshi/zamp-svc \
-              --namespace harshi \
+          helm upgrade --install ${APP_NAME} ${K8S_NAMESPACE}/${HELM_CHART_NAME} \
+              --namespace ${K8S_NAMESPACE} \
               --set default.image.repository="${ECR_REPO}" \
               --set default.image.tag="${IMAGE_TAG}" \
-              --values helm/awsprd-values.yaml \
+              --values helm/${BUILD_ENV}-values.yaml \
               --wait \
-              --timeout 5m0s \
+              --timeout 2m0s \
               --create-namespace
 
   slack-notification:
