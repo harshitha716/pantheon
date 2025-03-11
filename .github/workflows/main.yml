@@ -154,7 +154,7 @@ jobs:
 
       - name: Deploy
         run: |
-          helm s3 init s3://zamp-dev-sg-helm-repository
+          helm s3 init --ignore-if-exists s3://zamp-dev-sg-helm-repository
           aws s3 ls s3://zamp-dev-sg-helm-repository/
           helm repo add harshi s3://zamp-dev-sg-helm-repository
           helm repo list
