@@ -160,7 +160,7 @@ jobs:
           helm repo list
           helm repo update
           helm search repo harshi
-          helm upgrade --install ${APP_NAME} harshi/${HELM_CHART_NAME} \
+          helm upgrade --install ${APP_NAME} harshi/zamp-svc \
               --namespace harshi \
               --set default.image.repository="${ECR_REPO}" \
               --set default.image.tag="${IMAGE_TAG}" \
