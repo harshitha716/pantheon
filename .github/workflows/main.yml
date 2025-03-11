@@ -157,7 +157,7 @@ jobs:
 
           helm repo add ${K8S_NAMESPACE}-repo s3://zamp-dev-sg-helm-repository
           helm repo update
-          helm upgrade --install ${APP_NAME} ${K8S_NAMESPACE}-repo /${HELM_CHART_NAME} \
+          helm upgrade --install ${APP_NAME} ${K8S_NAMESPACE}-repo/${HELM_CHART_NAME} \
               --namespace ${K8S_NAMESPACE} \
               --set default.image.repository="${ECR_REPO}" \
               --set default.image.tag="${IMAGE_TAG}" \
