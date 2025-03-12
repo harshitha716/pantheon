@@ -210,8 +210,7 @@ ingressRoute:
     # -- Create an IngressRoute for the healthcheck probe
     enabled: false
     # -- Additional ingressRoute annotations (e.g. for kubernetes.io/ingress.class)
-    annotations: 
-      service.beta.kubernetes.io/aws-load-balancer-type: nlb
+    annotations: {}
     # -- Additional ingressRoute labels (e.g. for filtering IngressRoute by custom labels)
     labels: {}
     # -- The router match rule used for the healthcheck ingressRoute
@@ -768,7 +767,8 @@ service:
   single: true
   type: LoadBalancer
   # -- Additional annotations applied to both TCP and UDP services (e.g. for cloud provider specific config)
-  annotations: {}
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
   # -- Additional annotations for TCP service only
   annotationsTCP: {}
   # -- Additional annotations for UDP service only
