@@ -181,7 +181,7 @@ jobs:
       - prepare-env
       - build-push-image
       - deploy-to-eks
-      
+    if: ${{ failure() }}  # Only run if deploy-to-eks fails
     env:
       APP_NAME: ${{ needs.prepare-env.outputs.APP_NAME }}
       AWS_REGION: ${{ needs.prepare-env.outputs.AWS_REGION }}
