@@ -1,19 +1,14 @@
-name: Build, Deploy, and Rollback to Production
+name: Deploy cluster components
 
 on:
   workflow_dispatch:
-  repository_dispatch:
-    types: [deploy-prod]
-env:
-  APP_NAME: nginx
-  GITHUB_ACTOR_SLACK: ${{ github.event.client_payload.github_actor }}
-  NEW_TAG: ${{ github.sha }}
-
+  
 concurrency:
   group: production-deploy
   cancel-in-progress: false
 
 jobs:
+
   prepare-env:
     name: Prepare Env
     runs-on: ubuntu-latest
@@ -22,68 +17,41 @@ jobs:
       AWS_REGION: ${{ steps.vars.outputs.AWS_REGION }}
       AWS_ACCOUNT_ID: ${{ steps.vars.outputs.AWS_ACCOUNT_ID }}
       EKS_CLUSTER: ${{ steps.vars.outputs.EKS_CLUSTER }}
-      ECR_REPO: ${{ steps.vars.outputs.ECR_REPO }}
-      ECR_REGISTRY: ${{ steps.vars.outputs.ECR_REGISTRY }}
-      APP_NAME: ${{ steps.vars.outputs.APP_NAME }}
-      SLACK_WEBHOOK_URL: ${{ steps.vars.outputs.SLACK_WEBHOOK_URL }}
-      ENVIRONMENT: ${{ steps.vars.outputs.ENVIRONMENT }}
-      STG_TRIGGER_TOKEN: ${{ github.event.client_payload.trigger_token }}
-      PRD_TRIGGER_TOKEN: ${{ steps.vars.outputs.TRIGGER_TOKEN }}
-      SSH_PRIVATE_KEY: ${{ steps.vars.outputs.SSH_PRIVATE_KEY }}
       HELM_CHART_NAME: ${{ steps.vars.outputs.HELM_CHART_NAME }}
       HELM_REPOSITORY: ${{ steps.vars.outputs.HELM_REPOSITORY }}
-      BUILD_ENV: ${{ steps.vars.outputs.BUILD_ENV }}
       K8S_NAMESPACE: ${{ steps.vars.outputs.K8S_NAMESPACE }}
-      LABEL_SELECTOR: ${{ steps.vars.outputs.LABEL_SELECTOR }}
-      APP_NAMES: ${{ steps.vars.outputs.APP_NAMES }}
-  
+    
     steps:
       - id: vars
         run: |
           echo "AWS_REGION=us-east-2" >> $GITHUB_OUTPUT
           echo "AWS_ACCOUNT_ID=842675998483" >> $GITHUB_OUTPUT
           echo "EKS_CLUSTER=CI-CD" >> $GITHUB_OUTPUT
-          echo "ECR_REPO=harshitha" >> $GITHUB_OUTPUT
-          echo "ECR_REGISTRY=842675998483.dkr.ecr.us-east-2.amazonaws.com" >> $GITHUB_OUTPUT
-          echo "SLACK_WEBHOOK_URL=PRD_SLACK_WEBHOOK_URL" >> $GITHUB_OUTPUT
-          echo "PRD_TRIGGER_TOKEN=PRD_TRIGGER_TOKEN" >> $GITHUB_OUTPUT
-          echo "ENVIRONMENT=Production" >> $GITHUB_OUTPUT
-          echo "APP_NAME=$APP_NAME" >> $GITHUB_OUTPUT
-          echo "SSH_PRIVATE_KEY=SSH_PRIVATE_KEY" >> $GITHUB_OUTPUT
-          echo "HELM_CHART_NAME=nginx" >> $GITHUB_OUTPUT
-          echo "HELM_REPOSITORY=nginx" >> $GITHUB_OUTPUT
-          echo "BUILD_ENV=nginx"  >> $GITHUB_OUTPUT
-          echo "K8S_NAMESPACE=pantheon" >> $GITHUB_OUTPUT
-          echo "LABEL_SELECTOR=app.kubernetes.io/name" >> $GITHUB_OUTPUT
-          echo "APP_NAMES=nginx" >> $GITHUB_OUTPUT
+          echo "HELM_CHART_NAME=zamp-svc" >> $GITHUB_OUTPUT
+          echo "HELM_REPOSITORY=zamp-dev-sg-helm-repository" >> $GITHUB_OUTPUT
+          echo "K8S_NAMESPACE=kube-system" >> $GITHUB_OUTPUT
+          
+  deploy:
+    name: Deploy to EKS
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    timeout-minutes: 15
+    needs:
+      - prepare-env
+    env:
+      
+      AWS_REGION: ${{needs.prepare-env.outputs.AWS_REGION}}
+      EKS_CLUSTER: ${{needs.prepare-env.outputs.EKS_CLUSTER}}
+      HELM_CHART_NAME: ${{needs.prepare-env.outputs.HELM_CHART_NAME }}
+      HELM_REPOSITORY: ${{needs.prepare-env.outputs.HELM_REPOSITORY }}
+      K8S_NAMESPACE: ${{needs.prepare-env.outputs.K8S_NAMESPACE }}
+      AWS_ACCOUNT_ID: ${{needs.prepare-env.outputs.AWS_ACCOUNT_ID}}
      
-      - name: Output Branch name
-        run: |
-          echo ":seedling: Branch:${GITHUB_REF#refs/heads/}" >> $GITHUB_STEP_SUMMARY
-
-  deploy-to-eks:
-    name: Deploy to EKS (Nginx)
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    timeout-minutes: 15
-    needs:
-      - prepare-env
-    env:
-      APP_NAME: ${{ needs.prepare-env.outputs.APP_NAME }}
-      AWS_REGION: ${{ needs.prepare-env.outputs.AWS_REGION }}
-      EKS_CLUSTER: ${{ needs.prepare-env.outputs.EKS_CLUSTER }}
-      ENVIRONMENT: ${{ needs.prepare-env.outputs.ENVIRONMENT }}
-      HELM_CHART_NAME: ${{ needs.prepare-env.outputs.HELM_CHART_NAME }}
-      HELM_REPOSITORY: ${{ needs.prepare-env.outputs.HELM_REPOSITORY }}
-      K8S_NAMESPACE: ${{ needs.prepare-env.outputs.K8S_NAMESPACE }}
     steps:
-      - name: "Checkout repository on : ${{ env.NEW_TAG }}"
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ env.NEW_TAG }}
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: 'Set up AWS credentials using OIDC'
         uses: aws-actions/configure-aws-credentials@v1
@@ -101,62 +69,19 @@ jobs:
         with:
           version: "v3.7.2"
 
-      - name: "Add NGINX Helm repository"
+      
+      - name: Install or Upgrade metric server Helm chart
         run: |
-          helm repo add nginx https://helm.nginx.com/stable
-          helm repo update
+          helm upgrade --install metrics-server ./metrics-server \
+            --namespace kube-system \
+            --create-namespace \
+            -f ./charts/metrics-server/values.yaml
 
-      - name: "Deploy Nginx using Helm"
+      - name: Wait for metrics-server deployment to complete
         run: |
-          helm upgrade --install $APP_NAME nginx/nginx-ingress \
-            --namespace $K8S_NAMESPACE \
-            --set controller.replicaCount=2 \
-            --set controller.service.type=LoadBalancer \
-            --set controller.debug.enable=true \  # Fix by explicitly setting debug.enable
-            --wait \
-            --timeout 5m0s \
-            --create-namespace
+          kubectl rollout status deployment/metrics-server -n kube-system
 
-  rollback:
-    name: Rollback Deployment
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    timeout-minutes: 15
-    needs:
-      - prepare-env
-      - deploy-to-eks
-    if: ${{ failure() }}  # Only run if deploy-to-eks fails
-    env:
-      APP_NAME: ${{ needs.prepare-env.outputs.APP_NAME }}
-      AWS_REGION: ${{ needs.prepare-env.outputs.AWS_REGION }}
-      EKS_CLUSTER: ${{ needs.prepare-env.outputs.EKS_CLUSTER }}
-      K8S_NAMESPACE: ${{ needs.prepare-env.outputs.K8S_NAMESPACE }}
-    steps:
-      - name: "Checkout repository on : ${{ env.NEW_TAG }}"
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ env.NEW_TAG }}
 
-      - name: 'Set up AWS credentials using OIDC'
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: arn:aws:iam::${{ needs.prepare-env.outputs.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
-          aws-region: ${{ env.AWS_REGION }}
-          role-session-name: GitHubActionsSession
-
-      - name: "Set up kubectl"
+      - name: Notify on completion (optional)
         run: |
-          aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER
-
-      - name: "Install Helm"
-        uses: azure/setup-helm@v4
-        with:
-          version: "v3.7.2"
-
-      - name: "Rollback to previous stable version"
-        run: |
-          helm rollback $APP_NAME --namespace $K8S_NAMESPACE
-          echo ":arrow_backward: Rollback to previous stable version" >> $GITHUB_STEP_SUMMARY
+          echo "Metrics Server deployment completed successfully"
