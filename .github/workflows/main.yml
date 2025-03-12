@@ -217,16 +217,14 @@ jobs:
           
       - name: "Check Pods Status"
         run: |
-          # Fetch the pod status
-          POD_STATUS=$(kubectl get pods --namespace ${K8S_NAMESPACE} -l app=${APP_NAME} -o jsonpath='{.items[0].status.phase}' || echo 'No Pod Found')
-
-          # Check if the pod is not in the "Running" state, trigger rollback if in any other state
+          POD_STATUS=$(kubectl get pods --namespace ${K8S_NAMESPACE} -l app=${APP_NAME} -o jsonpath='{.items[0].status.phase}')
           if [[ "$POD_STATUS" != "Running" ]]; then
-            echo "Pod is in an unhealthy state ($POD_STATUS), triggering rollback."
-            helm rollback ${APP_NAME} --namespace ${K8S_NAMESPACE}
-            echo ":arrow_backward: Rollback to previous stable version" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "Pod is healthy and running, no rollback needed."
-          fi
-          
+          echo "Pod is in an unhealthy state ($POD_STATUS), triggering rollback."
+          helm rollback ${APP_NAME} --namespace ${K8S_NAMESPACE}
+          echo ":arrow_backward: Rollback to previous stable version" >> $GITHUB_STEP_SUMMARY
+
+
+
+  
+
         
