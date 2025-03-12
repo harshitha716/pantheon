@@ -81,6 +81,9 @@ jobs:
           helm upgrade --install traefik ./aws/traefik \
            --namespace kube-system \
            -f ./aws/traefik/values.yaml
+          helm upgrade --install cert-manager ./aws/cert-manager \
+           --namespace kube-system \
+           -f ./aws/cert-manager/values.yaml
 
 
 
