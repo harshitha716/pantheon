@@ -72,10 +72,10 @@ jobs:
       
       - name: Install or Upgrade metric server Helm chart
         run: |
-          helm upgrade --install metrics-server ./metrics-server \
-            --namespace kube-system \
-            --create-namespace \
-            -f ./charts/metrics-server/values.yaml
+          helm upgrade --install metrics-server ./aws/metrics-server \
+           --namespace kube-system \
+           -f ./aws/metrics-server/values.yaml
+
 
       - name: Wait for metrics-server deployment to complete
         run: |
