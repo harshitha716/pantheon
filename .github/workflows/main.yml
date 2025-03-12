@@ -223,10 +223,10 @@ jobs:
       - name: "Check Pods Status"
         run: |
           WAIT_TIMEOUT=300
-          kubectl get pods -n ${{needs.prepare-env.outputs.K8S_NAMESPACE}} -l ${{needs.prepare-env.outputs.LABEL_SELECTOR}}in (${{needs.prepare-env.outputs.APP_NAMES}})
+          kubectl get pods -n ${{needs.prepare-env.outputs.K8S_NAMESPACE}} -l '${{needs.prepare-env.outputs.LABEL_SELECTOR}}in (${{needs.prepare-env.outputs.APP_NAMES}})'
 
           # Fetch the pod status
-          POD_STATUS=$(kubectl get pods -n ${{needs.prepare-env.outputs.K8S_NAMESPACE}} -l ${{needs.prepare-env.outputs.LABEL_SELECTOR}}in (${{needs.prepare-env.outputs.APP_NAMES}}) -o jsonpath='{.items[0].status.phase}' || echo 'No Pods Found')
+          POD_STATUS=$(kubectl get pods -n ${{needs.prepare-env.outputs.K8S_NAMESPACE}} -l '${{needs.prepare-env.outputs.LABEL_SELECTOR}}in (${{needs.prepare-env.outputs.APP_NAMES}})' -o jsonpath='{.items[0].status.phase}' || echo 'No Pods Found')
 
           # Check if no pods are found
           if [[ "$POD_STATUS" == "No Pods Found" ]]; then
