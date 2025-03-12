@@ -67,7 +67,7 @@ jobs:
       - name: "Install Helm"
         uses: azure/setup-helm@v4
         with:
-          version: "v3.7.2"
+          version: "v3.9.0"
 
       
       - name: Install or Upgrade external-secret Helm chart
