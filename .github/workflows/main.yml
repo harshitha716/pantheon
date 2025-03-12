@@ -218,7 +218,7 @@ jobs:
       - name: "Check Pods Status"
         run: |
           WAIT_TIMEOUT=300
-          kubectl wait --namespace ${K8S_NAMESPACE} --for=condition=ready pod -l app=$APP_NAME} --timeout=${WAIT_TIMEOUT}s
+          kubectl wait --namespace ${K8S_NAMESPACE} --for=condition=ready pod -l app=${APP_NAME} --timeout=${WAIT_TIMEOUT}s
           # Fetch the pod status
           POD_STATUS=$(kubectl get pods --namespace ${K8S_NAMESPACE} -l app=${APP_NAME} -o jsonpath='{.items[0].status.phase}' || echo 'No Pods Found')
 
