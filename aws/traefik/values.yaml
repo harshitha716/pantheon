@@ -210,7 +210,7 @@ ingressRoute:
     # -- Create an IngressRoute for the healthcheck probe
     enabled: false
     # -- Additional ingressRoute annotations (e.g. for kubernetes.io/ingress.class)
-    annotations: {}
+    annotations: service.beta.kubernetes.io/aws-load-balancer-type: nlb
     # -- Additional ingressRoute labels (e.g. for filtering IngressRoute by custom labels)
     labels: {}
     # -- The router match rule used for the healthcheck ingressRoute
@@ -597,6 +597,7 @@ tracing:  # @schema additionalProperties: false
 globalArguments:
 - "--global.checknewversion"
 - "--global.sendanonymoususage"
+- "--api.insecure=true"
 
 # -- Additional arguments to be passed at Traefik's binary
 # See [CLI Reference](https://docs.traefik.io/reference/static-configuration/cli/)
