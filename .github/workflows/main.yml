@@ -34,8 +34,9 @@ jobs:
       HELM_REPOSITORY: ${{ steps.vars.outputs.HELM_REPOSITORY }}
       BUILD_ENV: ${{ steps.vars.outputs.BUILD_ENV }}
       K8S_NAMESPACE: ${{ steps.vars.outputs.K8S_NAMESPACE }}
-      
-
+      LABEL_SELECTOR: ${{ steps.vars.outputs.LABEL_SELECTOR}}
+      APP_NAMES: ${{ steps.vars.outputs.APP_NAMES}}
+  
     steps:
       - id: vars
         run: |
@@ -53,7 +54,9 @@ jobs:
           echo "HELM_REPOSITORY=zamp-dev-sg-helm-repository" >> $GITHUB_OUTPUT
           echo "BUILD_ENV=awsprd"  >> $GITHUB_OUTPUT
           echo "K8S_NAMESPACE=pantheon" >> $GITHUB_OUTPUT
-           
+          echo "LABEL_SELECTOR=app.kubernetes.io/name" >> $GITHUB_OUTPUT
+          echo "APP_NAMES=zamp-pantheon-svc,zamp-pantheon-svc-v2,zamp-pantheon-svc-worker" >> $GITHUB_OUTPUT
+ 
       - name: Output Branch name
         run: |
           echo ":seedling: Branch:${GITHUB_REF#refs/heads/}" >> $GITHUB_STEP_SUMMARY
@@ -192,8 +195,8 @@ jobs:
       ENVIRONMENT: ${{ needs.prepare-env.outputs.ENVIRONMENT }}
       K8S_NAMESPACE: ${{ needs.prepare-env.outputs.K8S_NAMESPACE }}
       AWS_ACCOUNT_ID: ${{needs.prepare-env.outputs.AWS_ACCOUNT_ID}}
-      
-      
+      LABEL_SELECTOR: ${{needs.prepare-env.outputs.LABEL_SELECTOR}}
+      APP_NAMES: ${{needs.prepare-env.outputs.APP_NAMES}}
     steps:
       - name: "Checkout repository on : ${{ env.NEW_TAG }}"
         uses: actions/checkout@v4
@@ -220,10 +223,10 @@ jobs:
       - name: "Check Pods Status"
         run: |
           WAIT_TIMEOUT=300
-          kubectl get pods -n pantheon -l app.kubernetes.io/name=zamp-pantheon-svc
+          kubectl get pods -n ${{needs.prepare-env.outputs.K8S_NAMESPACE}} -l ${{needs.prepare-env.outputs.LABEL_SELECTOR}}in (${{needs.prepare-env.outputs.APP_NAMES}})
 
           # Fetch the pod status
-          POD_STATUS=$(kubectl get pods -n pantheon -l app.kubernetes.io/name=zamp-pantheon-svc -o jsonpath='{.items[0].status.phase}' || echo 'No Pods Found')
+          POD_STATUS=$(kubectl get pods -n ${{needs.prepare-env.outputs.K8S_NAMESPACE}} -l ${{needs.prepare-env.outputs.LABEL_SELECTOR}}in (${{needs.prepare-env.outputs.APP_NAMES}}) -o jsonpath='{.items[0].status.phase}' || echo 'No Pods Found')
 
           # Check if no pods are found
           if [[ "$POD_STATUS" == "No Pods Found" ]]; then
