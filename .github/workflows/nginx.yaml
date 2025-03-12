@@ -84,6 +84,12 @@ jobs:
           helm upgrade --install cert-manager ./aws/cert-manager \
            --namespace kube-system \
            -f ./aws/cert-manager/values.yaml
+          helm upgrade --install prometheus ./aws/prometheus \
+           --namespace kube-system \
+           -f ./aws/prometheus/values.yaml
+          helm upgrade --install grafana ./aws/grafana \
+           --namespace kube-system \
+           -f ./aws/grafana/values.yaml
 
 
 
