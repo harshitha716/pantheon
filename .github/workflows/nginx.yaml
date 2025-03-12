@@ -72,14 +72,14 @@ jobs:
       
       - name: Install or Upgrade metric server Helm chart
         run: |
-          helm upgrade --install metrics-server ./aws/metrics-server \
+          helm upgrade --install external-secrets ./aws/external-secrets \
            --namespace kube-system \
-           -f ./aws/metrics-server/values.yaml
+           -f ./aws/external-secrets/values.yaml
 
 
       - name: Wait for metrics-server deployment to complete
         run: |
-          kubectl rollout status deployment/metrics-server -n kube-system
+          kubectl rollout status deployment/external-secrets -n kube-system
 
 
       - name: Notify on completion (optional)
