@@ -167,13 +167,16 @@ jobs:
               --set default.image.tag="${IMAGE_TAG}" \
               --values helm/${BUILD_ENV}-values.yaml \
               --wait \
-              --timeout 2m0s \
+              --timeout 1m0s \
               --create-namespace
 
   rollback:
     name: Rollback Deployment
     runs-on: ubuntu-latest
-    needs: deploy-to-eks
+    needs:
+      - prepare-env
+      - build-push-image
+      - deploy-to-eks
     if: ${{ always() }}  # Always run this job, regardless of the deployment outcome
     env:
       APP_NAME: ${{ needs.prepare-env.outputs.APP_NAME }}
