@@ -173,11 +173,15 @@ jobs:
   rollback:
     name: Rollback Deployment
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    timeout-minutes: 15
     needs:
       - prepare-env
       - build-push-image
       - deploy-to-eks
-    if: ${{ always() }}  # Always run this job, regardless of the deployment outcome
+      
     env:
       APP_NAME: ${{ needs.prepare-env.outputs.APP_NAME }}
       AWS_REGION: ${{ needs.prepare-env.outputs.AWS_REGION }}
