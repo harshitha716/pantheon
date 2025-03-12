@@ -51,8 +51,8 @@ jobs:
           echo "APP_NAME=$APP_NAME" >> $GITHUB_OUTPUT
           echo "SSH_PRIVATE_KEY=SSH_PRIVATE_KEY" >> $GITHUB_OUTPUT
           echo "HELM_CHART_NAME=nginx" >> $GITHUB_OUTPUT
-          echo "HELM_REPOSITORY=stable" >> $GITHUB_OUTPUT
-          echo "BUILD_ENV=awsprd"  >> $GITHUB_OUTPUT
+          echo "HELM_REPOSITORY=nginx" >> $GITHUB_OUTPUT
+          echo "BUILD_ENV=nginx"  >> $GITHUB_OUTPUT
           echo "K8S_NAMESPACE=pantheon" >> $GITHUB_OUTPUT
           echo "LABEL_SELECTOR=app.kubernetes.io/name" >> $GITHUB_OUTPUT
           echo "APP_NAMES=nginx" >> $GITHUB_OUTPUT
@@ -101,21 +101,21 @@ jobs:
         with:
           version: "v3.7.2"
 
-      - name: "Add stable Helm repository"
+      - name: "Add NGINX Helm repository"
         run: |
-          helm repo add stable https://charts.helm.sh/stable
+          helm repo add nginx https://helm.nginx.com/stable
           helm repo update
 
       - name: "Deploy Nginx using Helm"
         run: |
-          helm upgrade --install $APP_NAME stable/nginx-ingress \
+          helm upgrade --install $APP_NAME nginx/nginx-ingress \
             --namespace $K8S_NAMESPACE \
             --set controller.replicaCount=2 \
             --set controller.service.type=LoadBalancer \
             --wait \
             --timeout 5m0s \
             --create-namespace
-
+          
   rollback:
     name: Rollback Deployment
     runs-on: ubuntu-latest
