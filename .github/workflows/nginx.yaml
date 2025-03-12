@@ -34,8 +34,8 @@ jobs:
       HELM_REPOSITORY: ${{ steps.vars.outputs.HELM_REPOSITORY }}
       BUILD_ENV: ${{ steps.vars.outputs.BUILD_ENV }}
       K8S_NAMESPACE: ${{ steps.vars.outputs.K8S_NAMESPACE }}
-      LABEL_SELECTOR: ${{ steps.vars.outputs.LABEL_SELECTOR}}
-      APP_NAMES: ${{ steps.vars.outputs.APP_NAMES}}
+      LABEL_SELECTOR: ${{ steps.vars.outputs.LABEL_SELECTOR }}
+      APP_NAMES: ${{ steps.vars.outputs.APP_NAMES }}
   
     steps:
       - id: vars
@@ -56,7 +56,7 @@ jobs:
           echo "K8S_NAMESPACE=pantheon" >> $GITHUB_OUTPUT
           echo "LABEL_SELECTOR=app.kubernetes.io/name" >> $GITHUB_OUTPUT
           echo "APP_NAMES=nginx" >> $GITHUB_OUTPUT
- 
+     
       - name: Output Branch name
         run: |
           echo ":seedling: Branch:${GITHUB_REF#refs/heads/}" >> $GITHUB_STEP_SUMMARY
@@ -112,10 +112,11 @@ jobs:
             --namespace $K8S_NAMESPACE \
             --set controller.replicaCount=2 \
             --set controller.service.type=LoadBalancer \
+            --set controller.debug.enable=true \  # Fix by explicitly setting debug.enable
             --wait \
             --timeout 5m0s \
             --create-namespace
-          
+
   rollback:
     name: Rollback Deployment
     runs-on: ubuntu-latest
@@ -154,7 +155,7 @@ jobs:
         uses: azure/setup-helm@v4
         with:
           version: "v3.7.2"
-          
+
       - name: "Rollback to previous stable version"
         run: |
           helm rollback $APP_NAME --namespace $K8S_NAMESPACE
