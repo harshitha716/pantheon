@@ -183,6 +183,22 @@ jobs:
       IMAGE_TAG: ${{ needs.build-push-image.outputs.IMAGE_TAG }}
       ENVIRONMENT: ${{ needs.prepare-env.outputs.ENVIRONMENT }}
       K8S_NAMESPACE: ${{ needs.prepare-env.outputs.K8S_NAMESPACE }}
+
+      - name: 'Set up AWS credentials using OIDC'
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::${{ needs.prepare-env.outputs.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActionsSession
+
+      - name: "Set up kubectl"
+        run: |
+          aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER
+
+      - name: "Install Helm"
+        uses: azure/setup-helm@v4
+        with:
+          version: "v3.7.2"
     steps:
       - name: "Check Pods Status"
         run: |
