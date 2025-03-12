@@ -34,7 +34,7 @@ jobs:
       HELM_REPOSITORY: ${{ steps.vars.outputs.HELM_REPOSITORY }}
       BUILD_ENV: ${{ steps.vars.outputs.BUILD_ENV }}
       K8S_NAMESPACE: ${{ steps.vars.outputs.K8S_NAMESPACE }}
-      LABEL_SELECTOR: ${{ steps.vars.outputs.K8S_NAMESPACE }}
+      
 
     steps:
       - id: vars
@@ -53,7 +53,7 @@ jobs:
           echo "HELM_REPOSITORY=zamp-dev-sg-helm-repository" >> $GITHUB_OUTPUT
           echo "BUILD_ENV=awsprd"  >> $GITHUB_OUTPUT
           echo "K8S_NAMESPACE=pantheon" >> $GITHUB_OUTPUT
-          echo "LABEL_SELECTOR=app.kubernetes.io/name in (zamp-pantheon-svc,zamp-pantheon-svc-v2,zamp-pantheon-svc-worker)" >>$GITHUB_OUTPUT 
+           
       - name: Output Branch name
         run: |
           echo ":seedling: Branch:${GITHUB_REF#refs/heads/}" >> $GITHUB_STEP_SUMMARY
@@ -192,7 +192,7 @@ jobs:
       ENVIRONMENT: ${{ needs.prepare-env.outputs.ENVIRONMENT }}
       K8S_NAMESPACE: ${{ needs.prepare-env.outputs.K8S_NAMESPACE }}
       AWS_ACCOUNT_ID: ${{needs.prepare-env.outputs.AWS_ACCOUNT_ID}}
-      LABEL_SELECTOR: ${{needs.prepare-env.outputs.LABEL_SELECTOR}}
+      
       
     steps:
       - name: "Checkout repository on : ${{ env.NEW_TAG }}"
@@ -220,10 +220,10 @@ jobs:
       - name: "Check Pods Status"
         run: |
           WAIT_TIMEOUT=300
-          kubectl wait --namespace ${K8S_NAMESPACE} --for=condition=ready pod -l "$LABEL_SELECTOR" --timeout=${WAIT_TIMEOUT}s
+          kubectl get pods -n pantheon -l app.kubernetes.io/name=zamp-pantheon-svc --timeout=${WAIT_TIMEOUT}s
 
           # Fetch the pod status
-          POD_STATUS=$(kubectl get pods --namespace ${K8S_NAMESPACE} -l app=${APP_NAME} -o jsonpath='{.items[0].status.phase}' || echo 'No Pods Found')
+          POD_STATUS=$(kubectl get pods -n pantheon -l app.kubernetes.io/name=zamp-pantheon-svc -o jsonpath='{.items[0].status.phase}' || echo 'No Pods Found')
 
           # Check if no pods are found
           if [[ "$POD_STATUS" == "No Pods Found" ]]; then
