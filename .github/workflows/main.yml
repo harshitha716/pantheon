@@ -220,7 +220,7 @@ jobs:
       - name: "Check Pods Status"
         run: |
           WAIT_TIMEOUT=300
-          kubectl get pods -n pantheon -l app.kubernetes.io/name=zamp-pantheon-svc --timeout=${WAIT_TIMEOUT}s
+          kubectl get pods -n pantheon -l app.kubernetes.io/name=zamp-pantheon-svc
 
           # Fetch the pod status
           POD_STATUS=$(kubectl get pods -n pantheon -l app.kubernetes.io/name=zamp-pantheon-svc -o jsonpath='{.items[0].status.phase}' || echo 'No Pods Found')
