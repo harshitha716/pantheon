@@ -186,6 +186,7 @@ jobs:
       IMAGE_TAG: ${{ needs.build-push-image.outputs.IMAGE_TAG }}
       ENVIRONMENT: ${{ needs.prepare-env.outputs.ENVIRONMENT }}
       K8S_NAMESPACE: ${{ needs.prepare-env.outputs.K8S_NAMESPACE }}
+      AWS_ACCOUNT_ID: ${{needs.prepare-env.outputs.AWS_ACCOUNT_ID}}
       
     steps:
       - name: "Checkout repository on : ${{ env.NEW_TAG }}"
