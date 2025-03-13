@@ -6,6 +6,11 @@ on:
       HELM_RELEASE:
         description: "chart to be deployed"
         required: true
+        type: choice
+        options:
+          - "cert-manager"
+          - "external-secrets"
+          - "grafana"
         
 concurrency:
   group: production-deploy
