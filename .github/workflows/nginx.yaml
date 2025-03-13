@@ -76,9 +76,9 @@ jobs:
       
       - name: Install or Upgrade external-secret Helm chart
         run: |
-          helm upgrade --install ${{ github.event.inputs.ENV_HELM_RELEASE }}  ./aws/${{ github.event.inputs.ENV_HELM_RELEASE }} \
+          helm upgrade --install ${{ github.event.inputs.HELM_RELEASE }}  ./aws/${{ github.event.inputs.HELM_RELEASE }} \
            --namespace kube-system \
-           -f ./aws/${{ github.event.inputs.ENV_HELM_RELEASE }}/values.yaml
+           -f ./aws/${{ github.event.inputs.HELM_RELEASE }}/values.yaml
           
 
 
