@@ -78,8 +78,7 @@ jobs:
           echo "Helm Release: $HELM_RELEASE"
               helm upgrade --install "$HELM_RELEASE" ./aws/"$HELM_RELEASE" \
               --namespace kube-system \
-              -f ./aws/"$HELM_RELEASE"/values.yaml
-          done  
+              -f ./aws/"$HELM_RELEASE"/values.yaml  
 
       - name: Wait for external-secret deployment to complete
         run: |
