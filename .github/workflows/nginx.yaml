@@ -78,7 +78,7 @@ jobs:
         run: |
           IFS=',' read -r -a VALUES <<< "${{ github.event.inputs.HELM_RELEASE }}"
           for VALUE in "${VALUES[@]}"; do
-            echo "${{ VALUE  }}"
+           
             helm upgrade --install ${{ VALUE }} ./aws/${{ VALUE }} \
             --namespace kube-system \
             -f ./aws/${{ VALUE }}/values.yaml
