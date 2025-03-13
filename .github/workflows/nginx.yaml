@@ -78,9 +78,10 @@ jobs:
         run: |
           IFS=',' read -r -a VALUES <<< "${{ github.event.inputs.HELM_RELEASE }}"
           for VALUE in "${VALUES[@]}"; do
-            helm upgrade --install $VALUE ./aws/$VALUE \
+            echo "${{ VALUE  }}"
+            helm upgrade --install ${{ VALUE }} ./aws/${{ VALUE }} \
             --namespace kube-system \
-            -f ./aws/$VALUE/values.yaml
+            -f ./aws/${{ VALUE }}/values.yaml
           done  
 
       - name: Wait for external-secret deployment to complete
