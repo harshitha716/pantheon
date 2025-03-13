@@ -76,7 +76,8 @@ jobs:
       
       - name: Install or Upgrade external-secret Helm chart
         run: |
-          IFS=',' read -r -a VALUES <<< "$(echo ${{ github.event.inputs.HELM_RELEASE }} | tr -d '[:space:]')"
+          HELM_RELEASE="${{ github.event.inputs.HELM_RELEASE }}"
+          IFS=',' read -r -a VALUES <<< "$(echo "$HELM_RELEASE" | sed 's/, */,/g')"
           for VALUE in "${VALUES[@]}"; do
             echo "$VALUE"
             helm upgrade --install "$VALUE" ./aws/"$VALUE" \
