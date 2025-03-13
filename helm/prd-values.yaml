@@ -165,4 +165,4 @@ deployment:
       minReplicas: 2
       maxReplicas: 3
       targetCPUUtilizationPercentage: 80
-      targetMemoryUtilizationPercentage: 80
+      targetMemoryUtilizationPercentage: 90
