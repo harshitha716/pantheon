@@ -31,8 +31,6 @@ jobs:
           echo "AWS_REGION=us-east-2" >> $GITHUB_OUTPUT
           echo "AWS_ACCOUNT_ID=842675998483" >> $GITHUB_OUTPUT
           echo "EKS_CLUSTER=CI-CD" >> $GITHUB_OUTPUT
-          echo "HELM_CHART_NAME=zamp-svc" >> $GITHUB_OUTPUT
-          echo "HELM_REPOSITORY=zamp-dev-sg-helm-repository" >> $GITHUB_OUTPUT
           echo "K8S_NAMESPACE=kube-system" >> $GITHUB_OUTPUT
           
   deploy:
