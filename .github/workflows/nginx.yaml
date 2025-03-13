@@ -75,9 +75,10 @@ jobs:
       - name: Install or Upgrade external-secret Helm chart
         run: |
           HELM_RELEASE="${{ github.event.inputs.HELM_RELEASE }}"
+          echo "Helm Release: $HELM_RELEASE"
               helm upgrade --install "$HELM_RELEASE" ./aws/"$HELM_RELEASE" \
               --namespace kube-system \
-              -f ./aws/"$HELM_RELEASE" /values.yaml
+              -f ./aws/"$HELM_RELEASE"/values.yaml
           done  
 
       - name: Wait for external-secret deployment to complete
