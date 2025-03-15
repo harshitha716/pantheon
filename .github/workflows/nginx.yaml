@@ -53,10 +53,10 @@ jobs:
           terraform_version: 1.3.0  # Specify your Terraform version here
 
       - name: Configure Terraform backend
-        run: terraform init -chdir=./terraform
+        run: terraform init -chdir=terraform
 
       - name: Validate Terraform configuration
-        run: terraform validate ./terraform
+        run: terraform validate -chidr=terraform
 
       - name: Terraform Format Check
         run: terraform fmt -check ./terraform
