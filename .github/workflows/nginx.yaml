@@ -54,7 +54,6 @@ jobs:
 
       - name: Configure Terraform backend
         run: |
-          export TF_LOG=DEBUG  # Enable debugging for terraform init
           terraform init -chdir=terraform
 
       - name: Validate Terraform configuration
