@@ -54,26 +54,26 @@ jobs:
 
       - name: Change directory and Configure Terraform backend
         run: |
-          cd terraform
+          cd terraform/aws/aws-base/uae
           terraform init
 
       - name: Change directory and Validate Terraform configuration
         run: |
-          cd terraform
+          cd terraform/aws/aws-base/uae
           terraform validate
 
       - name: Change directory and Terraform Format Check
         run: |
-          cd terraform
+          cd terraform/aws/aws-base/uae
           terraform fmt -check
 
       - name: Change directory and Terraform Plan
         run: |
-          cd terraform
+          cd terraform/aws/aws-base/uae
           terraform plan -out=tfplan
         
       - name: Change directory and Terraform Apply
         if: github.ref == 'refs/heads/main'  # Only apply on main branch
         run: |
-          cd terraform
+          cd terraform/aws/aws-base/uae
           terraform apply -auto-approve tfplan
