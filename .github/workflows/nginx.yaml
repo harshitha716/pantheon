@@ -70,7 +70,7 @@ jobs:
       - name: Change directory and Terraform Plan
         run: |
           cd terraform
-          terraform plan
+          terraform plan -out=tfplan
         
       - name: Change directory and Terraform Apply
         if: github.ref == 'refs/heads/main'  # Only apply on main branch
