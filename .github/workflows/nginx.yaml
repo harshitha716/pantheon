@@ -52,23 +52,28 @@ jobs:
         with:
           terraform_version: 1.3.0  # Specify your Terraform version here
 
-      - name: Configure Terraform backend
+      - name: Change directory and Configure Terraform backend
         run: |
+          cd terraform
           terraform init
 
-      - name: Validate Terraform configuration
+      - name: Change directory and Validate Terraform configuration
         run: |
-          terraform validate -chdir=terraform
+          cd terraform
+          terraform validate
 
-      - name: Terraform Format Check
+      - name: Change directory and Terraform Format Check
         run: |
-          terraform fmt -check -chdir=terraform
+          cd terraform
+          terraform fmt -check
 
-      - name: Terraform Plan
+      - name: Change directory and Terraform Plan
         run: |
-          terraform plan -out=tfplan -chdir=terraform
+          cd terraform
+          terraform plan -out=tfplan
         
-      - name: Terraform Apply
+      - name: Change directory and Terraform Apply
         if: github.ref == 'refs/heads/main'  # Only apply on main branch
         run: |
-          terraform apply -auto-approve tfplan -chdir=terraform
+          cd terraform
+          terraform apply -auto-approve tfplan
