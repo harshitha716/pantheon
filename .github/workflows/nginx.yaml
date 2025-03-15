@@ -17,9 +17,9 @@ jobs:
     steps:
       - id: vars
         run: |
-          echo "AWS_REGION=me-central-1" >> $GITHUB_OUTPUT
-          echo "AWS_ACCOUNT_ID=916079538338" >> $GITHUB_OUTPUT
-          echo "EKS_CLUSTER=zamp-prd-uae-cluster" >> $GITHUB_OUTPUT
+          echo "AWS_REGION=us-east-2" >> $GITHUB_OUTPUT
+          echo "AWS_ACCOUNT_ID=842675998483" >> $GITHUB_OUTPUT
+          echo "EKS_CLUSTER=CI-CD" >> $GITHUB_OUTPUT
           echo "K8S_NAMESPACE=kube-system" >> $GITHUB_OUTPUT
 
   terraform:
