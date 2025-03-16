@@ -51,7 +51,7 @@ jobs:
           terraform {
             backend "s3" {
               bucket = "zamp-ai-backend-terraform"  # Your existing S3 bucket name
-              key    = "path/to/terraform.tfstates3://zamp-ai-backend-terraform/prd-uae/state/terraform.tfstate"  
+              key    = "s3://zamp-dev-sg-helm-repository/index.yaml"  
               region = "${{ env.AWS_REGION }}"
             }
           }
