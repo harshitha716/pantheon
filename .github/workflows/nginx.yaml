@@ -79,11 +79,6 @@ jobs:
           terraform plan -out=tfplan
           terraform show -json tfplan > plan.json
           
-      - name: Upload Plan as Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: terraform-plan
-          path: terraform/aws/aws-base/uae/plan.json
 
   Manual-Approval:
     runs-on: ubuntu-latest
