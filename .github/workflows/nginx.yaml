@@ -2,6 +2,7 @@ name: Terraform Plan
 
 on:
   workflow_dispatch:
+
 jobs:
   prepare-env:
     name: Prepare Env
@@ -15,11 +16,11 @@ jobs:
     steps:
       - id: vars
         run: |
-          echo "AWS_REGION=us-east-2" >> $GITHUB_OUTPUT
-          echo "AWS_ACCOUNT_ID=842675998483" >> $GITHUB_OUTPUT
-          echo "EKS_CLUSTER=CI-CD" >> $GITHUB_OUTPUT
-          echo "K8S_NAMESPACE=pantheon" >> $GITHUB_OUTPUT
-          
+          echo "AWS_REGION=us-east-2" >> $GITHUB_ENV
+          echo "AWS_ACCOUNT_ID=842675998483" >> $GITHUB_ENV
+          echo "EKS_CLUSTER=CI-CD" >> $GITHUB_ENV
+          echo "K8S_NAMESPACE=pantheon" >> $GITHUB_ENV
+
       - name: Output Branch name
         run: |
           echo ":seedling: Branch:${GITHUB_REF#refs/heads/}" >> $GITHUB_STEP_SUMMARY
@@ -91,12 +92,12 @@ jobs:
       - name: Request manual approval
         run: |
           echo "Manual approval is required to proceed with Terraform Apply."
-        # Optionally, you can add a comment or message asking for manual approval.
 
       - name: Pause for manual approval
-        run: |
-          echo "Waiting for manual approval to proceed with 'terraform apply'."  
-        # You may leave this empty, or use GitHub Actions 'approval' mechanisms.
+        uses: peter-evans/approve-pull-request@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          approval_required: true  # Optional: Will pause until approval is given
 
   Terraform-Apply:
     needs:
@@ -138,4 +139,4 @@ jobs:
       - name: Change directory and Apply Terraform Plan
         run: |
           cd terraform/aws/aws-base/uae
-          terraform apply -auto-approve tfplan
+          terraform apply -auto-approve terraform/aws/aws-base/uae/plan.json
