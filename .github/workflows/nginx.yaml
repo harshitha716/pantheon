@@ -46,7 +46,7 @@ jobs:
 
       - name: Change directory and Configure Terraform backend with S3
         run: |
-          cd terraform/aws/aws-base/uae
+          cd terraform
           cat <<EOF > backend.tf
           terraform {
             backend "s3" {
@@ -60,21 +60,21 @@ jobs:
 
       - name: Change directory and Validate Terraform configuration
         run: |
-          cd terraform/aws/aws-base/uae
+          cd terraform
           terraform validate
 
       - name: Change directory and Terraform Format Check
         run: |
-          cd terraform/aws/aws-base/uae
+          cd terraform
           terraform fmt -check
 
       - name: Change directory and Terraform Plan
         run: |
-          cd terraform/aws/aws-base/uae
+          cd terraform
           terraform plan -out=tfplan
         
       - name: Change directory and Terraform Apply
         if: github.ref == 'refs/heads/main'  # Only apply on main branch
         run: |
-          cd terraform/aws/aws-base/uae
+          cd terraform
           terraform apply -auto-approve tfplan
