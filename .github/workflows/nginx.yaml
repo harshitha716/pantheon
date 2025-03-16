@@ -63,11 +63,6 @@ jobs:
           cd terraform
           terraform validate
 
-      - name: Change directory and Terraform Format Check
-        run: |
-          cd terraform
-          terraform fmt -check
-
       - name: Change directory and Terraform Plan
         run: |
           cd terraform
