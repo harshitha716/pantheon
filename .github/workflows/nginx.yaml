@@ -50,7 +50,7 @@ jobs:
           cat <<EOF > backend.tf
           terraform {
             backend "s3" {
-              bucket = "zamp-ai-backend-terraform"  # Your existing S3 bucket name
+              bucket = "zamp-dev-sg-helm-repository"  # Your existing S3 bucket name
               key    = "s3://zamp-dev-sg-helm-repository"  
               region = "${{ env.AWS_REGION }}"
             }
