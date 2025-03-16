@@ -2,6 +2,7 @@ name: Terraform Plan
 
 on:
   workflow_dispatch:
+
 jobs:
   prepare-env:
     name: Prepare Env
@@ -10,13 +11,12 @@ jobs:
     outputs:
       AWS_REGION: ${{ steps.vars.outputs.AWS_REGION }}
       AWS_ACCOUNT_ID: ${{ steps.vars.outputs.AWS_ACCOUNT_ID }}
-      
     steps:
       - id: vars
         run: |
           echo "AWS_REGION=us-east-2" >> $GITHUB_OUTPUT
           echo "AWS_ACCOUNT_ID=842675998483" >> $GITHUB_OUTPUT
-          
+
   Terraform:
     needs:
       - prepare-env
@@ -63,14 +63,24 @@ jobs:
           cd terraform
           terraform plan -out=tfplan
 
-      - name: Wait for manual approval before applying plan
-        run: echo "Waiting for manual approval..." 
-        id: manual-approval
-        continue-on-error: false
-        timeout-minutes: 5  # Timeout if 
-        
-      - name: Change directory and Terraform Apply
-        if: github.ref == 'refs/heads/main' && steps.manual-approval.outcome == 'success'
+  manual-approval:
+    needs: Terraform
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Manual Approval'
+        run: |
+          echo "Please approve the next step to run terraform apply."
+        id: approval
+        continue-on-error: true
+        timeout-minutes: 5  # Timeout after 5 minutes if no approval.
+
+  Apply-Terraform:
+    needs:
+      - manual-approval
+    runs-on: ubuntu-latest
+    if: ${{ needs.manual-approval.outputs.approval == 'approved' }}  # This would require manual tracking or external action to update approval.
+    steps:
+      - name: 'Apply Terraform Plan'
         run: |
           cd terraform
           terraform apply -auto-approve tfplan
