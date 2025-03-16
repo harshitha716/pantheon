@@ -71,7 +71,7 @@ jobs:
         run: |
           echo "Please approve the next step to run terraform apply."
         id: approval
-        continue-on-error: true
+        continue-on-error: false
         timeout-minutes: 5  # Timeout after 5 minutes if no approval.
 
   Apply-Terraform:
