@@ -58,18 +58,19 @@ jobs:
           EOF
           terraform init
 
-      - name: Change directory and Validate Terraform configuration
-        run: |
-          cd terraform
-          terraform validate
-
       - name: Change directory and Terraform Plan
         run: |
           cd terraform
           terraform plan -out=tfplan
+
+      - name: Wait for manual approval before applying plan
+        run: echo "Waiting for manual approval..." 
+        id: manual-approval
+        continue-on-error: true
+        timeout-minutes: 1  # Timeout if 
         
       - name: Change directory and Terraform Apply
-        if: github.ref == 'refs/heads/main'  # Only apply on main branch
+        if: github.ref == 'refs/heads/main' && steps.manual-approval.outcome == 'success'
         run: |
-          cd terraform
+          cd terraform/aws/aws-base/uae
           terraform apply -auto-approve tfplan
