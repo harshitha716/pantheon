@@ -66,11 +66,11 @@ jobs:
       - name: Wait for manual approval before applying plan
         run: echo "Waiting for manual approval..." 
         id: manual-approval
-        continue-on-error: true
-        timeout-minutes: 1  # Timeout if 
+        continue-on-error: false
+        timeout-minutes: 5  # Timeout if 
         
       - name: Change directory and Terraform Apply
         if: github.ref == 'refs/heads/main' && steps.manual-approval.outcome == 'success'
         run: |
-          cd terraform/aws/aws-base/uae
+          cd terraform
           terraform apply -auto-approve tfplan
