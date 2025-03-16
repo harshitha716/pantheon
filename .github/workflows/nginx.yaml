@@ -2,7 +2,6 @@ name: Terraform Plan
 
 on:
   workflow_dispatch:
-
 jobs:
   prepare-env:
     name: Prepare Env
@@ -25,13 +24,10 @@ jobs:
         run: |
           echo ":seedling: Branch:${GITHUB_REF#refs/heads/}" >> $GITHUB_STEP_SUMMARY
 
-  Terraform:
+  Terraform-Plan:
     needs:
       - prepare-env
-    name: Build and Push Image
-    permissions:
-      id-token: write
-      contents: read
+    name: Generate Terraform Plan
     runs-on: ubuntu-latest
     env:
       AWS_REGION: ${{ needs.prepare-env.outputs.AWS_REGION }}
@@ -52,9 +48,18 @@ jobs:
         with:
           terraform_version: 1.3.0  # Specify your Terraform version here
 
-      - name: Change directory and Configure Terraform backend
+      - name: Change directory and Configure Terraform backend with S3
         run: |
           cd terraform/aws/aws-base/uae
+          cat <<EOF > backend.tf
+          terraform {
+            backend "s3" {
+              bucket = "your-existing-terraform-state-bucket"
+              key    = "path/to/terraform.tfstate"
+              region = "${{ env.AWS_REGION }}"
+            }
+          }
+          EOF
           terraform init
 
       - name: Change directory and Validate Terraform configuration
@@ -67,13 +72,70 @@ jobs:
           cd terraform/aws/aws-base/uae
           terraform fmt -check
 
-      - name: Change directory and Terraform Plan
+      - name: Generate Terraform Plan
         run: |
           cd terraform/aws/aws-base/uae
           terraform plan -out=tfplan
-        
-      - name: Change directory and Terraform Apply
-        if: github.ref == 'refs/heads/main'  # Only apply on main branch
+          terraform show -json tfplan > plan.json
+          
+      - name: Upload Plan as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-plan
+          path: terraform/aws/aws-base/uae/plan.json
+
+  Manual-Approval:
+    runs-on: ubuntu-latest
+    needs: Terraform-Plan
+    steps:
+      - name: Request manual approval
+        run: |
+          echo "Manual approval is required to proceed with Terraform Apply."
+        # Optionally, you can add a comment or message asking for manual approval.
+
+      - name: Pause for manual approval
+        run: |
+          echo "Waiting for manual approval to proceed with 'terraform apply'."  
+        # You may leave this empty, or use GitHub Actions 'approval' mechanisms.
+
+  Terraform-Apply:
+    needs:
+      - Manual-Approval
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ needs.prepare-env.outputs.AWS_REGION }}
+      AWS_ACCOUNT_ID: ${{ needs.prepare-env.outputs.AWS_ACCOUNT_ID }}
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: 'Set up AWS credentials using OIDC'
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::${{ needs.prepare-env.outputs.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActionsSession    
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.3.0  # Specify your Terraform version here
+
+      - name: Change directory and Configure Terraform backend with S3
+        run: |
+          cd terraform/aws/aws-base/uae
+          cat <<EOF > backend.tf
+          terraform {
+            backend "s3" {
+              bucket = "your-existing-terraform-state-bucket"
+              key    = "path/to/terraform.tfstate"
+              region = "${{ env.AWS_REGION }}"
+            }
+          }
+          EOF
+          terraform init
+
+      - name: Change directory and Apply Terraform Plan
         run: |
           cd terraform/aws/aws-base/uae
           terraform apply -auto-approve tfplan
