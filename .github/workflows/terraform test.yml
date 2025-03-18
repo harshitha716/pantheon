@@ -1,0 +1,42 @@
+name: CI latest
+ 
+on:
+   pull_request:
+    types: [synchronize, opened]
+   push:
+    branches:
+      - main
+ 
+jobs:
+  ci-tfplan:
+    name: ci-tfplan
+    if: ${{ github.event_name == 'pull_request' && github.base_ref == 'main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+ 
+      - name: Installing Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.0
+ 
+      - name: Terraform Plan
+        run: |
+          ls -ltr && terraform init && terraform plan
+ 
+  cd-tfapply:
+    name: cd-tf-apply
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+ 
+      - name: Installing Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.0
+      - name:  Terraform Init
+        run: |
+          terraform init && terraform apply -auto-approve
