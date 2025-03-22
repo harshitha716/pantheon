@@ -68,7 +68,6 @@ jobs:
     name: Terraform Apply (Manual Approval)
     needs: terraform-plan
     runs-on: ubuntu-latest
-    environment: testdevi  # Requires manual approval in GitHub UI
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
