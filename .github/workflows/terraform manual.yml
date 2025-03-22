@@ -78,12 +78,6 @@ jobs:
         with:
           terraform_version: 1.5.7
 
-      - name: Download Terraform Plan
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-plan
-          path: .
-
       - name: Terraform Apply
         run: |
           cd terraform
