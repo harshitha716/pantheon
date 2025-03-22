@@ -63,24 +63,28 @@ jobs:
           cd terraform
           terraform plan -out=tfplan
 
-  manual-approval:
-    needs: Terraform
+  
+  terraform-apply:
+    name: Terraform Apply (Manual Approval)
+    needs: terraform-plan
     runs-on: ubuntu-latest
+    environment: testdevi  # Requires manual approval in GitHub UI
     steps:
-      - name: 'Manual Approval'
-        run: |
-          echo "Please approve the next step to run terraform apply."
-        id: approval
-        continue-on-error: false
-        timeout-minutes: 5  # Timeout after 5 minutes if no approval.
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-  Apply-Terraform:
-    needs:
-      - manual-approval
-    runs-on: ubuntu-latest
-    if: ${{ needs.manual-approval.outputs.approval == 'approved' }}  # This would require manual tracking or external action to update approval.
-    steps:
-      - name: 'Apply Terraform Plan'
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+
+      - name: Download Terraform Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan
+          path: .
+
+      - name: Terraform Apply
         run: |
           cd terraform
-          terraform apply -auto-approve tfplan
+          terraform plan -out=tfplan
