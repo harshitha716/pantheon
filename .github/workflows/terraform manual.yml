@@ -78,6 +78,20 @@ jobs:
         with:
           terraform_version: 1.5.7
 
+      - name: Change directory and Configure Terraform backend with S3
+        run: |
+          cd terraform
+          cat <<EOF > backend.tf
+          terraform {
+            backend "s3" {
+              bucket = "zamp-dev-sg-helm-repository"  # Your existing S3 bucket name
+              key    = "s3://zamp-dev-sg-helm-repository"  
+              region = "${{ env.AWS_REGION }}"
+            }
+          }
+          EOF
+          terraform init
+
       - name: Terraform Apply
         run: |
           cd terraform
