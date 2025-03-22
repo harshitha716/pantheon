@@ -1,0 +1,90 @@
+name: Terraform Manual Approval
+
+on:
+  workflow_dispatch:
+
+jobs:
+  prepare-env:
+    name: Prepare Env
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      AWS_REGION: ${{ steps.vars.outputs.AWS_REGION }}
+      AWS_ACCOUNT_ID: ${{ steps.vars.outputs.AWS_ACCOUNT_ID }}
+    steps:
+      - id: vars
+        run: |
+          echo "AWS_REGION=us-east-2" >> $GITHUB_OUTPUT
+          echo "AWS_ACCOUNT_ID=842675998483" >> $GITHUB_OUTPUT
+
+  Terraform:
+    needs:
+      - prepare-env
+    name: Terraform
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ needs.prepare-env.outputs.AWS_REGION }}
+      AWS_ACCOUNT_ID: ${{ needs.prepare-env.outputs.AWS_ACCOUNT_ID }}
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: 'Set up AWS credentials using OIDC'
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::${{ needs.prepare-env.outputs.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActionsSession    
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.3.0  # Specify your Terraform version here
+
+      - name: Change directory and Configure Terraform backend with S3
+        run: |
+          cd terraform
+          cat <<EOF > backend.tf
+          terraform {
+            backend "s3" {
+              bucket = "zamp-dev-sg-helm-repository"  # Your existing S3 bucket name
+              key    = "s3://zamp-dev-sg-helm-repository"  
+              region = "${{ env.AWS_REGION }}"
+            }
+          }
+          EOF
+          terraform init
+
+      - name: Change directory and Terraform Plan
+        run: |
+          cd terraform
+          terraform plan -out=tfplan
+
+  
+  terraform-apply:
+    name: Terraform Apply (Manual Approval)
+    needs: terraform-plan
+    runs-on: ubuntu-latest
+    environment: testdevi  # Requires manual approval in GitHub UI
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+
+      - name: Download Terraform Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan
+          path: .
+
+      - name: Terraform Apply
+        run: |
+          cd terraform
+          terraform plan -out=tfplan
