@@ -86,7 +86,7 @@ on:
         options:
           - "values.yaml"
           - "charts/cert-manager/values.yaml --set installCRDs=true"
-          - "charts/traefik/values.yaml"
+          - "charts/traefik/values.yaml"   
 
 concurrency:
   group: production-deploy
@@ -116,13 +116,13 @@ jobs:
         id: set-account
         run: |
           if [[ "$ENVIRONMENT" == "prod" ]]; then
-            echo "AWS_ACCOUNT_ID=842675998483" >> $GITHUB_ENV
+            echo "AWS_ACCOUNT_ID=842675998483" >> $GITHUB_ENV  # Replace with actual Prod AWS Account ID
             echo "::set-output name=AWS_ACCOUNT_ID::842675998483"
           elif [[ "$ENVIRONMENT" == "stage" ]]; then
-            echo "AWS_ACCOUNT_ID=123456789" >> $GITHUB_ENV
+            echo "AWS_ACCOUNT_ID=123456789" >> $GITHUB_ENV  # Replace with actual Stage AWS Account ID
             echo "::set-output name=AWS_ACCOUNT_ID::123456789"
           else
-            echo "AWS_ACCOUNT_ID=0123456789" >> $GITHUB_ENV
+            echo "AWS_ACCOUNT_ID=0123456789" >> $GITHUB_ENV  # Replace with actual Dev AWS Account ID
             echo "::set-output name=AWS_ACCOUNT_ID::0123456789"
           fi
 
@@ -198,7 +198,12 @@ jobs:
 
       - name: "Verify Grafana password"
         run: |
-          echo "Grafana Password for $ENVIRONMENT: $GRAFANA_PASSWORD"
+          if [[ -z "$GRAFANA_PASSWORD" ]]; then
+            echo "Error: Grafana password is not set"
+          else
+            echo "Grafana Password for $ENVIRONMENT is set"
+            echo "Length of Grafana password: ${#GRAFANA_PASSWORD}"
+          fi
 
       - name: "Update values.yaml with Grafana secret name and password"
         run: |
