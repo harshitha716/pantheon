@@ -28,14 +28,14 @@ on:
         type: choice
         options:
           - "me-central-1"
-          - "us-east-1"
+          - "us-east-2"
       EKS_CLUSTER:
         description: "EKS cluster name"
         required: true
         type: choice
         options:
           - "zamp-prd-uae-cluster"
-          - "ClusterName"
+          - "CI-CD"
       NAMESPACE:
         description: "Namespace"
         required: true
@@ -116,7 +116,7 @@ jobs:
         id: set-account
         run: |
           if [[ "$ENVIRONMENT" == "prod" ]]; then
-            echo "AWS_ACCOUNT_ID=916079538338" >> $GITHUB_ENV  # Replace with actual Prod AWS Account ID
+            echo "AWS_ACCOUNT_ID=842675998483" >> $GITHUB_ENV  # Replace with actual Prod AWS Account ID
             echo "::set-output name=AWS_ACCOUNT_ID::916079538338"
           elif [[ "$ENVIRONMENT" == "stage" ]]; then
             echo "AWS_ACCOUNT_ID=123456789" >> $GITHUB_ENV  # Replace with actual Stage AWS Account ID
@@ -167,7 +167,7 @@ jobs:
       - name: "Set up AWS credentials using OIDC"
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/InfrastructureRole
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/GitHubActionsOIDCRole
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: GitHubActionsSession
 
