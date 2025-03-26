@@ -107,10 +107,10 @@ jobs:
       HELM_RELEASE: ${{ github.event.inputs.HELM_RELEASE }}
       TEMPLATES_PATH: ${{ github.event.inputs.TEMPLATES_PATH }}
       VALUES_FILE: ${{ github.event.inputs.VALUES_FILE }}
-    
+
     outputs:
       AWS_ACCOUNT_ID: ${{ steps.set-account.outputs.AWS_ACCOUNT_ID }}
-    
+
     steps:
       - name: Determine AWS AccountID based on environment
         id: set-account
@@ -180,7 +180,30 @@ jobs:
         with:
           version: "v3.9.0"
 
-      - name: Install or Upgrade Helm chart
+      - name: "Set Grafana password based on environment"
+        run: |
+          if [[ "$ENVIRONMENT" == "prod" ]]; then
+            echo "Setting Grafana password for prod"
+            export GRAFANA_PASSWORD=${{ secrets.GRAFANA_PASSWORD_PROD }}
+            export GRAFANA_SECRET_NAME="grafana-prod-secret"
+          elif [[ "$ENVIRONMENT" == "stage" ]]; then
+            echo "Setting Grafana password for stage"
+            export GRAFANA_PASSWORD=${{ secrets.GRAFANA_PASSWORD_STAGE }}
+            export GRAFANA_SECRET_NAME="grafana-stage-secret"
+          else
+            echo "Setting Grafana password for dev"
+            export GRAFANA_PASSWORD=${{ secrets.GRAFANA_PASSWORD_DEV }}
+            export GRAFANA_SECRET_NAME="grafana-dev-secret"
+          fi
+
+      - name: "Update values.yaml with Grafana secret name and password"
+        run: |
+          # Update the existingSecret field with the correct secret name
+          sed -i "s/^existingSecret:.*/existingSecret: \"$GRAFANA_SECRET_NAME\"/" ./k8s-aws/"$TEMPLATES_PATH"/"$VALUES_FILE"
+          # Update the passwordKey field with the correct password
+          sed -i "s/^passwordKey:.*/passwordKey: \"$GRAFANA_PASSWORD\"/" ./k8s-aws/"$TEMPLATES_PATH"/"$VALUES_FILE"
+
+      - name: "Install or Upgrade Helm chart"
         run: |
           helm upgrade --install "$HELM_RELEASE" ./k8s-aws/"$TEMPLATES_PATH" \
             --namespace "$NAMESPACE" \
