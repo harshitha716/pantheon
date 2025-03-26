@@ -86,7 +86,7 @@ on:
         options:
           - "values.yaml"
           - "charts/cert-manager/values.yaml --set installCRDs=true"
-          - "charts/traefik/values.yaml"   
+          - "charts/traefik/values.yaml"
 
 concurrency:
   group: production-deploy
