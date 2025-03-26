@@ -117,7 +117,7 @@ jobs:
         run: |
           if [[ "$ENVIRONMENT" == "prod" ]]; then
             echo "AWS_ACCOUNT_ID=842675998483" >> $GITHUB_ENV  # Replace with actual Prod AWS Account ID
-            echo "::set-output name=AWS_ACCOUNT_ID::916079538338"
+            echo "::set-output name=AWS_ACCOUNT_ID::842675998483"
           elif [[ "$ENVIRONMENT" == "stage" ]]; then
             echo "AWS_ACCOUNT_ID=123456789" >> $GITHUB_ENV  # Replace with actual Stage AWS Account ID
             echo "::set-output name=AWS_ACCOUNT_ID::123456789"
