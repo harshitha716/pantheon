@@ -3,8 +3,8 @@ on:
   workflow_dispatch:
     inputs:
       BRANCH:
-           description: "Branch name"
-    required: true
+        description: "Branch name"
+        required: true
         default: "main"
         type: choice
         options:
