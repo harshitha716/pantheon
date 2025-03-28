@@ -17,9 +17,9 @@ on:
         default: "dev"
         type: choice
         options:
-          - "dev"
-          - "stage"
-          - "prod"
+          - dev
+          - stage
+          - prod
       AWS_REGION:
         description: "AWS region to deploy infra"
         required: true
@@ -63,7 +63,6 @@ on:
         options:
           - "awsprd"
           - "dev"
-       
 env:
   APP_NAME: hcp
   
