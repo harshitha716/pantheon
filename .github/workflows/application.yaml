@@ -101,23 +101,16 @@ jobs:
       ECR_REGISTRY: ${{ steps.registry.outputs.ECR_REGISTRY }}
     steps:
       - id: vars
-        run: >
+        run: |
           echo "HELM_CHART_NAME=zamp-svc" >> $GITHUB_OUTPUT
-
           echo "APP_NAME=$APP_NAME" >> $GITHUB_OUTPUT
-
           echo "APP_NAMES=hcp-app-migrations, hcp-auth, hcp-api, hcp-dashboard, hcp-pinot-proxy, hcp-api-worker-default, hcp-api-worker-ops" >> $GITHUB_OUTPUT
-
           echo "LABEL_SELECTOR=app.kubernetes.io/name" >> $GITHUB_OUTPUT
-
           echo "SLACK_WEBHOOK_URL=PRD_SLACK_WEBHOOK_URL" >> $GITHUB_OUTPUT
-
           echo "PRD_TRIGGER_TOKEN=PRD_TRIGGER_TOKEN" >> $GITHUB_OUTPUT
-
           echo "SSH_PRIVATE_KEY=SSH_PRIVATE_KEY" >> $GITHUB_OUTPUT
       - name: Output Branch name
-        run: >
-          echo ":seedling: Branch:${GITHUB_REF#refs/heads/}" >> $GITHUB_STEP_SUMMARY
+        run: echo ":seedling: Branch:${GITHUB_REF#refs/heads/}" >> $GITHUB_STEP_SUMMARY
       - name: Checkout repository on ${{ github.event.inputs.BRANCH }}
         uses: actions/checkout@v4
         with:
@@ -127,14 +120,10 @@ jobs:
         id: tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: >
-          NEW_TAG=$(echo "v$(($(git tag -l 'v*' --sort=-v:refname | head -n 1 | cut
-          -c 2-)+1))")
-
+        run: |
+          NEW_TAG=$(echo "v$(($(git tag -l 'v*' --sort=-v:refname | head -n 1 | cut -c 2-)+1))")
           git tag $NEW_TAG
-
           git push origin $NEW_TAG
-
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_OUTPUT
       - name: Determine AWS AccountID based on environment
         id: set-account
@@ -220,9 +209,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: GitHubActionsSession
       - name: Login to Amazon ECR
-        run: >
-          aws ecr get-login-password --region $AWS_REGION | docker login --username
-          AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+        run: aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
       - id: build
         name: Build and Push Image
         run: |
@@ -295,7 +282,7 @@ jobs:
           helm plugin install https://github.com/hypnoglow/helm-s3.git
           helm plugin list
       - name: Clear Migrations
-        run: >
+        run: |
           if [[ $(helm list -n hcp | grep -c 'hcp-app-migrations') -gt 0 ]]; then
             echo "Migration release found. Uninstalling..."
             helm uninstall hcp-app-migrations -n hcp --timeout 2m0s --wait 
@@ -351,17 +338,12 @@ jobs:
           helm plugin install https://github.com/hypnoglow/helm-s3.git
           helm plugin list
       - name: Deploy App Migrations
-        run: >
+        run: |
           IMAGE_TAG=$GITHUB_SHA
-
           VALUES_FILE=helm/${BUILD_ENV}-app-migrations-values.yaml
-
           cat ${VALUES_FILE}
-
           echo "Deploying ${APP_NAME} with image tag ${IMAGE_TAG}"
-
           helm repo add ${K8S_NAMESPACE}-repo s3://${HELM_REPOSITORY} && helm repo update
-
           helm upgrade --install ${APP_NAME} ${K8S_NAMESPACE}-repo/${HELM_CHART_NAME} \
           --namespace ${K8S_NAMESPACE} \
           --set default.image.repository="${ECR_REPO}" \
@@ -370,35 +352,25 @@ jobs:
           --wait \
           --timeout 12m0s \
           --create-namespace
-
           
           # Check if the job completed successfully
-
           echo "Checking job status for ${APP_NAME}..."
-
           sleep 10 # Give some time for the job to start
-
-
+          
           # Check if job exists
-
           if ! kubectl get jobs zamp-hcp-app-migrations-app-migrations -n ${K8S_NAMESPACE} &> /dev/null; then
             echo "Error: No job found for ${APP_NAME}"
             exit 1
           fi
-
-
+          
           # Check if job failed
-
           echo "Checking job status for ${APP_NAME}..."
-
           JOB_STATUS=$(kubectl get jobs zamp-hcp-app-migrations-app-migrations -n ${K8S_NAMESPACE} -o=jsonpath='{.status.conditions[?(@.type=="Failed")].status}')
-
           if [ "$JOB_STATUS" == "True" ]; then
             echo "Error: Job ${APP_NAME} failed"
             exit 1
           fi
-
-
+          
           echo "Job ${APP_NAME} is running successfully or has completed"
   deploy-other-services:
     strategy:
@@ -458,21 +430,14 @@ jobs:
           helm plugin install https://github.com/hypnoglow/helm-s3.git
           helm plugin list
       - name: Deploy
-        run: >
+        run: |
           IMAGE_TAG=$GITHUB_SHA
-
           APP_NAME=${{ matrix.app }}
-
           ECR_REPO=asia-southeast1-docker.pkg.dev/development-351109/zamp-dev-sg-container-repo/${APP_NAME}
-
           VALUES_FILE=helm/${BUILD_ENV}-${APP_NAME#hcp-}-values.yaml
-
           cat ${VALUES_FILE}
-
           echo "Deploying ${APP_NAME} with image tag ${IMAGE_TAG}"
-
           helm repo add ${K8S_NAMESPACE}-repo s3://${HELM_REPOSITORY} && helm repo update
-
           helm upgrade --install ${APP_NAME} ${K8S_NAMESPACE}-repo/${HELM_CHART_NAME} \
           --namespace ${K8S_NAMESPACE} \
           --set default.image.repository="${ECR_REPO}" \
@@ -497,17 +462,14 @@ jobs:
       - uses: technote-space/workflow-conclusion-action@v3
       - name: Update slack message body and environment
         id: body
-        run: >
+        run: |
           if [ '${{ env.WORKFLOW_CONCLUSION }}' == 'success' ]
-
           then
             echo "SLACK_MESSAGE=Success :white_check_mark:" >> $GITHUB_OUTPUT
           elif [ '${{ env.WORKFLOW_CONCLUSION }}'  == 'failure' ]
-
           then
             echo "SLACK_MESSAGE=Failed :x:"   >> $GITHUB_OUTPUT
           elif [ '${{ env.WORKFLOW_CONCLUSION }}'  == 'cancelled' ]
-
           then
             echo "SLACK_MESSAGE=Cancelled :grey_exclamation:"   >> $GITHUB_OUTPUT
           fi
@@ -518,8 +480,7 @@ jobs:
           SLACK_ICON: https://media-exp1.licdn.com/dms/image/C4D0BAQEsXCky1jDBjw/company-logo_200_200/0/1650191766210?e=2147483647&v=beta&t=skUuL49MkcdxJZmEEN2wy5E7Xqy176Ar7EPsKoSMUEE
           SLACK_MESSAGE: ${{ steps.body.outputs.SLACK_MESSAGE }}
           SLACK_TITLE: Build Status
-          SLACK_FOOTER: <${{ github.server_url }}/${{ github.repository }}|${{
-          github.repository }}>
+          SLACK_FOOTER: <${{ github.server_url }}/${{ github.repository }}|${{ github.repository }}>
           ZAMP_ENV: ${{ env.ENVIRONMENT }}
           SLACK_USERNAME: Zamp-Devops
           SLACK_WEBHOOK: ${{ secrets[env.SLACK_WEBHOOK_URL] }}
