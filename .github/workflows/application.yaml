@@ -3,71 +3,67 @@ on:
   workflow_dispatch:
     inputs:
       BRANCH:
-        description: Branch name
+        description: "Branch name"
         required: true
-        default: main
+        default: "main"
         type: choice
         options:
-          - main
-          - temporal-sdk
-          - development
+          - "main"
+          - "temporal-sdk"
+          - "development"
       ENVIRONMENT:
-        description: Deployment Environment (dev/stage/prod)
+        description: "Deployment Environment (dev/stage/prod)"
         required: true
-        default: dev
+        default: "dev"
         type: choice
         options:
-          - dev
-          - stage
-          - prod
+          - "dev"
+          - "stage"
+          - "prod"
       AWS_REGION:
-        description: AWS region to deploy infra
+        description: "AWS region to deploy infra"
         required: true
-        default: us-east-1
+        default: "us-east-1"
         type: choice
         options:
-          - me-central-1
-          - us-east-1
+          - "me-central-1"
+          - "us-east-1"
       EKS_CLUSTER:
-        description: EKS cluster name
+        description: "EKS cluster name"
         required: true
         type: choice
         options:
-          - zamp-prd-uae-cluster
-          - zamp-dev-us-cluster
+          - "zamp-prd-uae-cluster"
+          - "zamp-dev-us-cluster"
       NAMESPACE:
-        description: Namespace
+        description: "Namespace"
         required: true
         type: choice
         options:
-          - hcp
-          - test
+          - "hcp"
+          - "test"
       HELM_REPOSITORY:
-        description: S3 helm repository name
+        description: "S3 helm repository name"
         required: true
         type: choice
         options:
-          - zamp-prd-uae-helmcharts
-          - zamp-dev-us-helmcharts
+          - "zamp-prd-uae-helmcharts"
+          - "zamp-dev-us-helmcharts"
       ECR_REPO:
-        description: ECR repo name
+        description: "ECR repo name"
         required: true
         type: choice
         options:
-          - zamp-prd-uae-pantheon-ecr
-          - zamp-dev-us-pantheon-ecr
+          - "zamp-prd-uae-pantheon-ecr"
+          - "zamp-dev-us-pantheon-ecr"
       BUILD_ENV:
-        description: Build env
+        description: "Build env"
         required: true
         type: choice
         options:
-          - awsprd
-          - dev
-  paths-ignore:
-    - helm/dev-values.yaml
-    - helm/prd-values.yaml
-    - helm/stg-values.yaml
-    - .github/workflows/*
+          - "awsprd"
+          - "dev"
+       
 env:
   APP_NAME: hcp
   
