@@ -1,161 +1,103 @@
-name: Deploy cluster components
-
+name: Build and Deploy
 on:
   workflow_dispatch:
     inputs:
       BRANCH:
-        description: "Branch name"
+        description: Branch name
         required: true
-        default: "main"
+        default: main
         type: choice
         options:
-          - "main"
-          - "uae"
-          - "cluster-components-pipeline-v1"
+          - main
+          - temporal-sdk
+          - development
       ENVIRONMENT:
-        description: "Deployment Environment (dev/stage/prod)"
+        description: Deployment Environment (dev/stage/prod)
         required: true
-        default: "dev"
+        default: dev
         type: choice
         options:
           - dev
           - stage
           - prod
       AWS_REGION:
-        description: "AWS region to deploy infra"
+        description: AWS region to deploy infra
         required: true
-        default: "me-central-1"
+        default: us-east-1
         type: choice
         options:
-          - "me-central-1"
-          - "us-east-2"
+          - me-central-1
+          - us-east-1
       EKS_CLUSTER:
-        description: "EKS cluster name"
+        description: EKS cluster name
         required: true
         type: choice
         options:
-          - "zamp-prd-uae-cluster"
-          - "CI-CD"
+          - zamp-prd-uae-cluster
+          - zamp-dev-us-cluster
       NAMESPACE:
-        description: "Namespace"
+        description: Namespace
         required: true
         type: choice
         options:
-          - "kube-system"
-          - "traefik"
-          - "cert-manager"
-          - "windmill"
-          - "monitoring"
-          - "logging"
-      HELM_RELEASE:
-        description: "Chart to be deployed"
+          - hcp
+          - test
+      HELM_REPOSITORY:
+        description: S3 helm repository name
         required: true
         type: choice
         options:
-          - "cert-manager"
-          - "external-secrets"
-          - "traefik"
-          - "windmill"
-          - "metrics-server"
-          - "prometheus"
-          - "grafana"
-          - "elasticsearch"
-          - "filebeat"
-          - "kibana"
-          - "karpenter"
-      TEMPLATES_PATH:
-        description: "Helm chart templates path"
+          - zamp-prd-uae-helmcharts
+          - zamp-dev-us-helmcharts
+      ECR_REPO:
+        description: ECR repo name
         required: true
         type: choice
         options:
-          - "cert-manager/charts/cert-manager"
-          - "external-secrets"
-          - "windmill"
-          - "traefik/charts/traefik"
-          - "metrics-server"
-          - "prometheus"
-          - "grafana"
-          - "elasticsearch"
-          - "filebeat"
-          - "kibana"
-          - "karpenter"
-      VALUES_FILE:
-        description: "Values File path"
+          - zamp-prd-uae-pantheon-ecr
+          - zamp-dev-us-pantheon-ecr
+      BUILD_ENV:
+        description: Build env
         required: true
         type: choice
         options:
-          - "values.yaml"
-          - "charts/cert-manager/values.yaml --set installCRDs=true"
-          - "charts/traefik/values.yaml"
-
-concurrency:
-  group: production-deploy
-  cancel-in-progress: false
-
+          - awsprd
+          - dev
+  paths-ignore:
+    - helm/dev-values.yaml
+    - helm/prd-values.yaml
+    - helm/stg-values.yaml
+    - .github/workflows/*
+env:
+  APP_NAME: hcp
+  
 jobs:
   prepare-env:
     name: Prepare Env
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-m
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     timeout-minutes: 2
-
     env:
       BRANCH: ${{ github.event.inputs.BRANCH }}
       ENVIRONMENT: ${{ github.event.inputs.ENVIRONMENT }}
       AWS_REGION: ${{ github.event.inputs.AWS_REGION }}
       EKS_CLUSTER: ${{ github.event.inputs.EKS_CLUSTER }}
       NAMESPACE: ${{ github.event.inputs.NAMESPACE }}
-      HELM_RELEASE: ${{ github.event.inputs.HELM_RELEASE }}
-      TEMPLATES_PATH: ${{ github.event.inputs.TEMPLATES_PATH }}
-      VALUES_FILE: ${{ github.event.inputs.VALUES_FILE }}
-
-    steps:
-      - name: "Checkout repository"
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.inputs.BRANCH }}
-
-      - name: "Set Grafana password based on environment"
-        run: |
-          if [[ "$ENVIRONMENT" == "prod" ]]; then
-            echo "Setting Grafana password for prod"
-            export GRAFANA_PASSWORD=${{ secrets.GRAFANA_PASSWORD_PROD }}
-            export GRAFANA_SECRET_NAME="grafana-prod-secret"
-          elif [[ "$ENVIRONMENT" == "stage" ]]; then
-            echo "Setting Grafana password for stage"
-            export GRAFANA_PASSWORD=${{ secrets.GRAFANA_PASSWORD_STAGE }}
-            export GRAFANA_SECRET_NAME="grafana-stage-secret"
-          else
-            echo "Setting Grafana password for dev"
-            export GRAFANA_PASSWORD=${{ secrets.GRAFANA_PASSWORD_DEV }}
-            export GRAFANA_SECRET_NAME="grafana-dev-secret"
-          fi
-
-      - name: "Verify Grafana password"
-        run: |
-          if [[ -z "$GRAFANA_PASSWORD" ]]; then
-            echo "Error: Grafana password is not set"
-          else
-            echo "Grafana Password for $ENVIRONMENT is set"
-            echo "Length of Grafana password: ${#GRAFANA_PASSWORD}"
-          fi
-
-      - name: "Update values.yaml with Grafana secret name and password"
-        run: |
-          # Update the existingSecret field with the correct secret name
-          sed -i "s/^existingSecret:.*/existingSecret: \"$GRAFANA_SECRET_NAME\"/" ./k8s-aws/"$TEMPLATES_PATH"/"$VALUES_FILE"
-          # Update the passwordKey field with the correct password
-          sed -i "s/^passwordKey:.*/passwordKey: \"$GRAFANA_PASSWORD\"/" ./k8s-aws/"$TEMPLATES_PATH"/"$VALUES_FILE"
-
-      - name: "Deploy using Helm"
-        run: |
-          helm upgrade --install $HELM_RELEASE ./k8s-aws/$TEMPLATES_PATH --namespace $NAMESPACE -f ./k8s-aws/$TEMPLATES_PATH/$VALUES_FILE --set awsRegion=$AWS_REGION --set cluster=$EKS_CLUSTER
-
-  post-deploy:
-    name: Post Deployment Verification
-    runs-on: ubuntu-latest
-    needs: prepare-env
-    steps:
-      - name: "Verify Grafana service"
-        run: |
-          kubectl get svc -n $NAMESPACE
-          kubectl describe svc grafana -n $NAMESPACE
+      HELM_REPOSITORY: ${{ github.event.inputs.HELM_REPOSITORY }}
+      ECR_REPO: ${{ github.event.inputs.ECR_REPO }}
+      BUILD_ENV: ${{ github.event.inputs.BUILD_ENV }}
+    outputs:
+      APP_NAME: ${{ steps.vars.outputs.APP_NAME }}
+      SLACK_WEBHOOK_URL: ${{ steps.vars.outputs.SLACK_WEBHOOK_URL }}
+      STG_TRIGGER_TOKEN: ${{ github.event.client_payload.trigger_token }}
+      PRD_TRIGGER_TOKEN: ${{ steps.vars.outputs.TRIGGER_TOKEN }}
+      SSH_PRIVATE_KEY: ${{ steps.vars.outputs.SSH_PRIVATE_KEY }}
+      HELM_CHART_NAME: ${{ steps.vars.outputs.HELM_CHART_NAME }}
+      LABEL_SELECTOR: ${{ steps.vars.outputs.LABEL_SELECTOR }}
+      APP_NAMES: ${{ steps.vars.outputs.APP_NAMES }}
+      NEW_TAG: ${{ steps.tag.outputs.NEW_TAG }}
+      AWS_ACCOUNT_ID: ${{ steps.set-account.outputs.AWS_ACCOUNT_ID }}
+      ECR_REGISTRY: ${{ steps.registry.outputs.ECR_REGISTRY }}
+      
