@@ -1,4 +1,4 @@
-name: App Platform - Build and Deploy To Development
+name: Build and Deploy
 on:
   workflow_dispatch:
     inputs:
