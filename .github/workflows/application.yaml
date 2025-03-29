@@ -69,7 +69,7 @@ env:
 jobs:
   prepare-env:
     name: Prepare Env
-    runs-on: ubuntu-latest-m
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: true
@@ -186,7 +186,7 @@ jobs:
           - hcp-api-worker-default
           - hcp-api-worker-ops
     name: Build and Push Image
-    runs-on: ubuntu-latest-m
+    runs-on: ubuntu-latest
     env:
       BRANCH: ${{ github.event.inputs.BRANCH }}
       ENVIRONMENT: ${{ github.event.inputs.ENVIRONMENT }}
