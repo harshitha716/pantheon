@@ -39,3 +39,35 @@ on:
         required: true
         type: string
 
+jobs:
+  deploy:
+    runs-on: ubuntu-latest  # Or your preferred runner
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: ${{ github.event.inputs.AWS_REGION }}
+
+      - name: Deploy to AWS
+        run: |
+          echo "Deploying to EKS Cluster ${{ github.event.inputs.EKS_CLUSTER }} in Region ${{ github.event.inputs.AWS_REGION }}"
+          # Add your deploy commands here
+
+      - name: Build and push Docker image
+        run: |
+          echo "Building Docker image for ${GITHUB_SHA}"
+          # Add your docker build and push commands here
+          
+      - name: Install Helm
+        run: |
+          curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+          
+      - name: Helm Deploy
+        run: |
+          helm upgrade --install my-release my-chart --namespace ${{ github.event.inputs.NAMESPACE }} --values ${{ github.event.inputs.HELM_REPOSITORY }}
