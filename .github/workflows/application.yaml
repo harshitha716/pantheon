@@ -7,239 +7,35 @@ on:
         description: Branch name
         required: true
         default: main
-        type: choice
-        options:
-          - main
-          - temporal-sdk
-          - development
+        type: string
       ENVIRONMENT:
         description: Deployment Environment (dev/stage/prod)
         required: true
         default: dev
-        type: choice
-        options:
-          - dev
-          - stage
-          - prod
+        type: string
       AWS_REGION:
         description: AWS region to deploy infra
         required: true
         default: us-east-1
-        type: choice
-        options:
-          - me-central-1
-          - us-east-1
+        type: string
       EKS_CLUSTER:
         description: EKS cluster name
         required: true
-        type: choice
-        options:
-          - zamp-prd-uae-cluster
-          - zamp-dev-us-cluster
+        type: string
       NAMESPACE:
         description: Namespace
         required: true
-        type: choice
-        options:
-          - hcp
-          - test
+        type: string
       HELM_REPOSITORY:
         description: S3 helm repository name
         required: true
-        type: choice
-        options:
-          - zamp-prd-uae-helmcharts
-          - zamp-dev-us-helmcharts
+        type: string
       ECR_REPO:
         description: ECR repo name
         required: true
-        type: choice
-        options:
-          - zamp-prd-uae-pantheon-ecr
-          - zamp-dev-us-pantheon-ecr
+        type: string
       BUILD_ENV:
         description: Build env
         required: true
-        type: choice
-        options:
-          - awsprd
-          - dev
+        type: string
 
-  paths-ignore:
-    - helm/dev-values.yaml
-    - helm/prd-values.yaml
-    - helm/stg-values.yaml
-    - .github/workflows/*
-
-env:
-  APP_NAME: hcp
-
-jobs:
-  prepare-env:
-    name: Prepare Env
-    runs-on: ubuntu-latest
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
-    timeout-minutes: 2
-    env:
-      BRANCH: ${{ github.event.inputs.BRANCH }}
-      ENVIRONMENT: ${{ github.event.inputs.ENVIRONMENT }}
-      AWS_REGION: ${{ github.event.inputs.AWS_REGION }}
-      EKS_CLUSTER: ${{ github.event.inputs.EKS_CLUSTER }}
-      NAMESPACE: ${{ github.event.inputs.NAMESPACE }}
-      HELM_REPOSITORY: ${{ github.event.inputs.HELM_REPOSITORY }}
-      ECR_REPO: ${{ github.event.inputs.ECR_REPO }}
-      BUILD_ENV: ${{ github.event.inputs.BUILD_ENV }}
-    outputs:
-      APP_NAME: ${{ steps.vars.outputs.APP_NAME }}
-      SLACK_WEBHOOK_URL: ${{ steps.vars.outputs.SLACK_WEBHOOK_URL }}
-      STG_TRIGGER_TOKEN: ${{ github.event.client_payload.trigger_token }}
-      PRD_TRIGGER_TOKEN: ${{ steps.vars.outputs.TRIGGER_TOKEN }}
-      SSH_PRIVATE_KEY: ${{ steps.vars.outputs.SSH_PRIVATE_KEY }}
-      HELM_CHART_NAME: ${{ steps.vars.outputs.HELM_CHART_NAME }}
-      LABEL_SELECTOR: ${{ steps.vars.outputs.LABEL_SELECTOR }}
-      APP_NAMES: ${{ steps.vars.outputs.APP_NAMES }}
-      NEW_TAG: ${{ steps.tag.outputs.NEW_TAG }}
-      AWS_ACCOUNT_ID: ${{ steps.set-account.outputs.AWS_ACCOUNT_ID }}
-      ECR_REGISTRY: ${{ steps.registry.outputs.ECR_REGISTRY }}
-    steps:
-      - id: vars
-        run: |
-          echo "HELM_CHART_NAME=zamp-svc" >> $GITHUB_OUTPUT
-          echo "APP_NAME=$APP_NAME" >> $GITHUB_OUTPUT
-          echo "APP_NAMES=hcp-app-migrations, hcp-auth, hcp-api, hcp-dashboard, hcp-pinot-proxy, hcp-api-worker-default, hcp-api-worker-ops" >> $GITHUB_OUTPUT
-          echo "LABEL_SELECTOR=app.kubernetes.io/name" >> $GITHUB_OUTPUT
-          echo "SLACK_WEBHOOK_URL=PRD_SLACK_WEBHOOK_URL" >> $GITHUB_OUTPUT
-          echo "PRD_TRIGGER_TOKEN=PRD_TRIGGER_TOKEN" >> $GITHUB_OUTPUT
-          echo "SSH_PRIVATE_KEY=SSH_PRIVATE_KEY" >> $GITHUB_OUTPUT
-      - name: Output Branch name
-        run: |
-          echo ":seedling: Branch:${GITHUB_REF#refs/heads/}" >> $GITHUB_STEP_SUMMARY
-      - name: Checkout repository on ${{ github.event.inputs.BRANCH }}
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.inputs.BRANCH }}
-      - name: Create a new tag version
-        id: tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          NEW_TAG=$(echo "v$(($(git tag -l 'v*' --sort=-v:refname | head -n 1 | cut -c 2-)+1))")
-          git tag $NEW_TAG
-          git push origin $NEW_TAG
-          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_OUTPUT
-      - name: Determine AWS AccountID based on environment
-        id: set-account
-        run: |
-          if [[ "$ENVIRONMENT" == "prod" ]]; then
-            echo "AWS_ACCOUNT_ID=916079538338" >> $GITHUB_ENV
-            echo "::set-output name=AWS_ACCOUNT_ID::916079538338"
-          elif [[ "$ENVIRONMENT" == "stage" ]]; then
-            echo "AWS_ACCOUNT_ID=123456789" >> $GITHUB_ENV
-            echo "::set-output name=AWS_ACCOUNT_ID::123456789"
-          else
-            echo "AWS_ACCOUNT_ID=0123456789" >> $GITHUB_ENV
-            echo "::set-output name=AWS_ACCOUNT_ID::0123456789"
-          fi
-      - name: Construct AWS registry url
-        id: registry
-        run: |
-          ECR_REGISTRY="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
-          echo "ECR_REGISTRY=$ECR_REGISTRY" >> $GITHUB_ENV
-          echo "::set-output name=ECR_REGISTRY::$ECR_REGISTRY"
-      - name: Print selected values
-        run: |
-          echo "Branch: $BRANCH"
-          echo "Environment: $ENVIRONMENT"
-          echo "AWS Region: $AWS_REGION"
-          echo "AWS Account ID: $AWS_ACCOUNT_ID"
-          echo "EKS cluster: $EKS_CLUSTER"
-          echo "Namespace: $NAMESPACE"
-          echo "S3 helm repository: $HELM_REPOSITORY"
-          echo "ECR repo: $ECR_REPO"
-          echo "ECR registry: $ECR_REGISTRY"
-          echo "Build env: $BUILD_ENV"
-          echo "App name: $APP_NAME"
-          echo "Slack webhook url: $SLACK_WEBHOOK_URL"
-          echo "Prd trigger token: $PRD_TRIGGER_TOKEN"
-          echo "SSH private key: $SSH_PRIVATE_KEY"
-          echo "Helm chart name: $HELM_CHART_NAME"
-          echo "Label selector: $LABEL_SELECTOR"
-
-  build-push-image:
-    needs:
-      - prepare-env
-    permissions:
-      id-token: write
-      contents: read
-    strategy:
-      matrix:
-        app:
-          - hcp-app-migrations
-          - hcp-auth
-          - hcp-api
-          - hcp-dashboard
-          - hcp-pinot-proxy
-          - hcp-api-worker-default
-          - hcp-api-worker-ops
-    name: Build and Push Image
-    runs-on: ubuntu-latest
-    env:
-      BRANCH: ${{ github.event.inputs.BRANCH }}
-      ENVIRONMENT: ${{ github.event.inputs.ENVIRONMENT }}
-      AWS_REGION: ${{ github.event.inputs.AWS_REGION }}
-      AWS_ACCOUNT_ID: ${{ needs.prepare-env.outputs.AWS_ACCOUNT_ID }}
-      EKS_CLUSTER: ${{ github.event.inputs.EKS_CLUSTER }}
-      NAMESPACE: ${{ github.event.inputs.NAMESPACE }}
-      HELM_REPOSITORY: ${{ github.event.inputs.HELM_REPOSITORY }}
-      ECR_REPO: ${{ github.event.inputs.ECR_REPO }}
-      ECR_REGISTRY: ${{ needs.prepare-env.outputs.ECR_REGISTRY }}
-      APP_NAME: ${{ needs.prepare-env.outputs.APP_NAME }}
-      SSH_PRIVATE_KEY: ${{ needs.prepare-env.outputs.SSH_PRIVATE_KEY }}
-      NEW_TAG: ${{ needs.prepare-env.outputs.NEW_TAG }}
-    outputs:
-      IMAGE_TAG: ${{ steps.build.outputs.IMAGE_TAG }}
-      ECR_REPO: ${{ steps.build.outputs.ECR_REPO }}
-    steps:
-      - name: Checkout repository on ${{ github.event.inputs.BRANCH }}
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.inputs.BRANCH }}
-      - name: Set up AWS credentials using OIDC
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
-          aws-region: ${{ env.AWS_REGION }}
-          role-session-name: GitHubActionsSession
-      - name: Login to Amazon ECR
-        run: |
-          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-      - id: build
-        name: Build and Push Image
-        run: |
-          APP_NAME=${{ matrix.app }}
-          echo "Temporary if branch -- fix later"
-          if [ "$APP_NAME" = "hcp-api-worker-default" ]; then
-            DOCKERFILE="Dockerfile.worker.default"
-            DIR_PATH="./services/api"
-          elif [ "$APP_NAME" = "hcp-api-worker-ops" ]; then
-            DOCKERFILE="Dockerfile.worker.ops"
-            DIR_PATH="./services/api"
-          else
-            DOCKERFILE="Dockerfile"
-            DIR_PATH="./services/${APP_NAME#hcp-}"
-          fi
-          IMAGE_TAG=$GITHUB_SHA
-          echo "Building ${APP_NAME} with image tag ${IMAGE_TAG}"
-          cd $DIR_PATH
-          docker build -t $ECR_REPO:$IMAGE_TAG .
-          docker tag $ECR_REPO:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
-          echo "ECR_REPO=$ECR_REPO" >> $GITHUB_OUTPUT
-          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_OUTPUT
-          echo ":whale2:App Image Tag: ${IMAGE_TAG}" >> $GITHUB_STEP_SUMMARY
-  # The rest of your jobs (clear-migrations, deploy-app-migrations, deploy-other-services, slack-notification)
-  # Follow the same corrected structure.
